@@ -62,35 +62,67 @@ def FillMatrix():
         for j in range(len(G.nodes)):
             if not df.loc[(df['source'] == Nations[i]) & (df['target'] == Nations[j])].empty:
                 matrix[i][j] = df.loc[(df['source'] == Nations[i]) & (
-                df['target'] == Nations[j]), 'value'].iloc[0]
+                    df['target'] == Nations[j]), 'value'].iloc[0]
             else:
                 pass
 
+
 FillMatrix()
-print(matrix)
-# nx.draw(G, node_size=[x * 20 for x in TotalProduction2020], node_color=ColorMap, with_labels=True)
-# plt.show()
 
-'''
-fig, ax = plt.subplots(figsize=(10, 10))
-im = ax.imshow(matrix, cmap='viridis')
+Weights = []
 
-# mostra la barra colori
-cbar = ax.figure.colorbar(im, ax=ax)
+for i in range(len(G)):
+    for j in range(len(G)):
+        if i < j:
+            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+                Weights.append(matrix[i][j]-matrix[j][i])
+            else:
+                pass
+        else:
+            pass
 
-# impostazioni degli assi
-ax.set_xticks(range(len(G.nodes)))
-ax.set_yticks(range(len(G.nodes)))
-ax.set_xticklabels(Nations2020, rotation=90)
-ax.set_yticklabels(Nations2020)
+Edges = []
+AdjMat = np.zeros((len(G.nodes), len(G.nodes)))
+for i in range(len(G)):
+    for j in range(len(G)):
+        if i < j:
+            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+                if matrix[i][j]-matrix[j][i] >= 0:
+                    Edges.append(
+                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
+                    AdjMat[i][j] = matrix[i][j]-matrix[j][i]
+                else:
+                    Edges.append(
+                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
+                    AdjMat[j][i] = matrix[j][i]-matrix[i][j]
+            else:
+                pass
+        else:
+            pass
 
-# aggiungi etichette agli assi
-ax.set_xlabel("Target")
-ax.set_ylabel("Source")
-ax.set_title("Matrice di flusso")
 
-# mostra l'immagine
+G.add_weighted_edges_from(Edges)
+degree_dict = dict(G.degree(G.nodes()))
+
+
+# bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
+# print(bc) #non so se è utile
+
+# closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
+# print(closeness_centrality) #non so se è utile
+
+
+pos = nx.fruchterman_reingold_layout(G)
+
+nx.draw(G, pos=pos, node_size=[
+        x * 5 for x in TotalProduction2020], node_color=ColorMap, with_labels=True)
+
 
 plt.show()
-'''
-#np.savetxt("matrix.txt", matrix)
+
+# degree fatto
+# matrice al quadrato
+# centralità di flusso, ho foto su cell
+# centralità di intermediazione di flusso
+# resistenza di flusso
+# pagerank?
