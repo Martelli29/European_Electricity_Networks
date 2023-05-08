@@ -33,8 +33,16 @@ with open("share-by-source2020+Carbon_Density.txt", "r") as file:
 
 G = nx.DiGraph()
 
-for i in range(len(Nations)):
-    G.add_node(str(Nations[i]))
+
+def NodeConstruction():
+    for i in range(len(Nations)):
+        G.add_node(str(Nations[i]))
+
+
+pos = {'ALB': (1.1, -3), 'AUT': (0.3, -1), 'BIH': (0.7, -2), 'BEL': (-0.8, 0.5), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.6), 'HRV': (0.8, -1.5), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
+       'ITA': (0, -2), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.5), 'MKD': (1.5, -3), 'MLT': (0, -3), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.2), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
+
+NodeConstruction()
 
 ColorMap = []
 for i in range(len(G)):
@@ -47,13 +55,12 @@ for i in range(len(G)):
     elif CarbonDensity2020[i] >= 300 and CarbonDensity2020[i] < 400:
         ColorMap.append("orange")
     elif CarbonDensity2020[i] >= 400 and CarbonDensity2020[i] < 500:
-        ColorMap.append("brown")
+        ColorMap.append("red")
     elif CarbonDensity2020[i] >= 500:
-        ColorMap.append("black")
+        ColorMap.append("brown")
 
 
 matrix = np.zeros((len(G.nodes), len(G.nodes)))
-df = pd.read_csv("Imp-Exp_2017-19.txt")
 
 
 def FillMatrix():
@@ -89,12 +96,14 @@ for i in range(len(G)):
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
                 if matrix[i][j]-matrix[j][i] >= 0:
                     Edges.append(
-                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
+                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])/400000))
                     AdjMat[i][j] = matrix[i][j]-matrix[j][i]
+                    AdjMat[j][i] = -AdjMat[i][j]
                 else:
                     Edges.append(
-                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
+                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])/400000))
                     AdjMat[j][i] = matrix[j][i]-matrix[i][j]
+                    AdjMat[i][j] = -AdjMat[j][i]
             else:
                 pass
         else:
@@ -104,6 +113,25 @@ for i in range(len(G)):
 G.add_weighted_edges_from(Edges)
 degree_dict = dict(G.degree(G.nodes()))
 
+'''
+L0=AdjMat/np.sum(AdjMat, axis=1, keepdims=True)
+L=-L0
+M=np.eye(len(AdjMat))+L
+x=np.linalg.solve(M, np.ones(len(AdjMat)))
+np.savetxt("L0.txt", L0)
+np.savetxt("L.txt", L)
+np.savetxt("Ad.txt", AdjMat)
+np.savetxt("M.txt", M)
+'''
+
+
+
+
+
+
+
+
+print(x)
 
 # bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
 # print(bc) #non so se è utile
@@ -111,11 +139,10 @@ degree_dict = dict(G.degree(G.nodes()))
 # closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
 # print(closeness_centrality) #non so se è utile
 
-
-pos = nx.fruchterman_reingold_layout(G)
+edge_weights = [G[u][v]['weight'] for u, v in G.edges()]
 
 nx.draw(G, pos=pos, node_size=[
-        x * 5 for x in TotalProduction2020], node_color=ColorMap, with_labels=True)
+        x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
 
 plt.show()
