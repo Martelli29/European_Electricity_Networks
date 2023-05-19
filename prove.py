@@ -9,27 +9,36 @@ TotalProduction2020 = []
 CarbonDensity2020 = []
 
 with open("Nations.txt", "r") as file:
-    next(file)  # salta la prima riga
-    row = next(file)  # stampa la seconda riga
+    next(file)  # skip first row
+    row = next(file)  # second row
     Nations = row.strip().split(",")
 
-with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
+with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
-    next(TotalEnergy)
+    next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
-        last_column = row[-1]  # seleziona l'ultima colonna
+        last_column = row[-1]  # select last column
         TotalProduction2020.append(last_column)
     TotalProduction2020 = list(map(float, TotalProduction2020))
 
+a = sum(TotalProduction2020)
+print(a)
 
-with open("share-by-source2020+Carbon_Density.txt", "r") as file:
+with open("sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
     for row in contribute:
-        last_column = row[-1]  # seleziona l'ultima colonna
+        last_column = row[-1]  # select last column
         CarbonDensity2020.append(last_column)
     CarbonDensity2020 = list(map(float, CarbonDensity2020))
 
+lista=[]
+for i in range(len(Nations)):
+    t=CarbonDensity2020[i]*TotalProduction2020[i]
+    lista.append(t)
+
+pes=sum(lista)/a    
+print(pes)
 
 G = nx.DiGraph()
 
@@ -74,6 +83,8 @@ def FillMatrix():
                 pass
 
 
+
+
 FillMatrix()
 
 Weights = []
@@ -96,12 +107,12 @@ for i in range(len(G)):
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
                 if matrix[i][j]-matrix[j][i] >= 0:
                     Edges.append(
-                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])/400000))
+                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
                     AdjMat[i][j] = matrix[i][j]-matrix[j][i]
                     AdjMat[j][i] = -AdjMat[i][j]
                 else:
                     Edges.append(
-                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])/400000))
+                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
                     AdjMat[j][i] = matrix[j][i]-matrix[i][j]
                     AdjMat[i][j] = -AdjMat[j][i]
             else:
@@ -113,33 +124,22 @@ for i in range(len(G)):
 G.add_weighted_edges_from(Edges)
 degree_dict = dict(G.degree(G.nodes()))
 
-'''
-L0=AdjMat/np.sum(AdjMat, axis=1, keepdims=True)
-L=-L0
-M=np.eye(len(AdjMat))+L
-x=np.linalg.solve(M, np.ones(len(AdjMat)))
-np.savetxt("L0.txt", L0)
-np.savetxt("L.txt", L)
-np.savetxt("Ad.txt", AdjMat)
-np.savetxt("M.txt", M)
-'''
 
 
 
 
 
-
-
-
-print(x)
-
-# bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
-# print(bc) #non so se è utile
+#bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
+#print(bc) #non so se è utile
 
 # closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
 # print(closeness_centrality) #non so se è utile
 
-edge_weights = [G[u][v]['weight'] for u, v in G.edges()]
+hits=nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
+print(hits)
+
+
+edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
@@ -153,3 +153,6 @@ plt.show()
 # centralità di intermediazione di flusso
 # resistenza di flusso
 # pagerank?
+
+
+
