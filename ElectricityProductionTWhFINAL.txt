@@ -1,40 +1,40 @@
-Entity,Code,Year,Total (TWh)
-Albania,ALB,2017-19,6.04
-Austria,AUT,2017-19,68
-Bosnia and Herzegovina,BIH,2017-19,16.65
-Belgium,BEL,2017-19,83
-Bulgaria,BGR,2017-19,45
-Belarus,BLR,2017-19,35.6
-Switzerland,CHE,2017-19,64.7
-Czechia,CZE,2017-19,86
-Germany,DEU,2017-19,629.7
-Denmark,DNK,2017-19,30.66
-Estonia,EST,2017-19,11.1
-Spain,ESP,2017-19,272.1
-Finland,FIN,2017-19,68.24
-France,FRA,2017-19,565.65
-United Kingdom,GBR,2017-19,327
-Greece,GRC,2017-19,52.81
-Croatia,HRV,2017-19,12.61
-Hungary,HUN,2017-19,33.83
-Ireland,IRL,2017-19,30.7
-Italy,ITA,2017-19,290.28
-Lithuania,LTU,2017-19,3.07
-Luxembourg,LUX,2017-19,0.93
-Latvia,LVA,2017-19,6.90
-Moldova,MDA,2017-19,5.04
-Montenegro,MNE,2017-19,3.35
-North Macedonia,MKD,2017-19,5.48
-Malta,MLT,2017-19,1.86
-Netherlands,NLD,2017-19,117.7
-Norway,NOR,2017-19,141.5
-Poland,POL,2017-19,167.37
-Portugal,PRT,2017-19,55.97
-Romania,ROU,2017-19,62.6
-Serbia,SRB,2017-19,34.9
-Russia,RUS,2017-19,1046.5
-Sweden,SWE,2017-19,166.1
-Slovenia,SVN,2017-19,16.1
-Slovakia,SVK,2017-19,27.3
-Turkey,TUR,2017-19,288
-Ukraine,UKR,2017-19,146.3
+Entity,Code,Year,Electricity from coal (TWh),Total (TWh)
+Albania,ALB,2017-19,0.0,6.04
+Austria,AUT,2017-19,1.726,68
+Bosnia and Herzegovina,BIH,2017-19,11.13,16.65
+Belgium,BEL,2017-19,0.091,83
+Bulgaria,BGR,2017-19,18.98,45
+Belarus,BLR,2017-19,0.0,35.6
+Switzerland,CHE,2017-19,0.0,64.7
+Czechia,CZE,2017-19,40.11,86
+Germany,DEU,2017-19,213.7,629.7
+Denmark,DNK,2017-19,5.65,30.66
+Estonia,EST,2017-19,0.0,11.1
+Spain,ESP,2017-19,31.57,272.1
+Finland,FIN,2017-19,5.37,68.24
+France,FRA,2017-19,8.54,565.65
+United Kingdom,GBR,2017-19,15.43,327
+Greece,GRC,2017-19,16.05,52.81
+Croatia,HRV,2017-19,1.48,12.61
+Hungary,HUN,2017-19,4.51,33.83
+Ireland,IRL,2017-19,2.13,30.7
+Italy,ITA,2017-19,26.91,290.28
+Lithuania,LTU,2017-19,0.0,3.07
+Luxembourg,LUX,2017-19,0.0,0.93
+Latvia,LVA,2017-19,0.0,6.90
+Moldova,MDA,2017-19,4.16,5.04
+Montenegro,MNE,2017-19,1.40,3.35
+North Macedonia,MKD,2017-19,3.18,5.48
+Malta,MLT,2017-19,0.0,1.86
+Netherlands,NLD,2017-19,25.48,117.7
+Norway,NOR,2017-19,0.0,141.5
+Poland,POL,2017-19,126.86,167.37
+Portugal,PRT,2017-19,10.90,55.97
+Romania,ROU,2017-19,15.34,62.6
+Serbia,SRB,2017-19,24.47,34.9
+Russia,RUS,2017-19,170.7,1046.5
+Sweden,SWE,2017-19,0.33,166.1
+Slovenia,SVN,2017-19,4.64,16.1
+Slovakia,SVK,2017-19,2.83,27.3
+Turkey,TUR,2017-19,100.9,288
+Ukraine,UKR,2017-19,45.54,146.3

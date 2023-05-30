@@ -40,7 +40,7 @@ for i in range(len(Nations)):
 pes=sum(lista)/a    
 print(pes)
 
-G = nx.DiGraph()
+G = nx.Graph()
 
 
 def NodeConstruction():
@@ -87,18 +87,16 @@ def FillMatrix():
 
 FillMatrix()
 
+
 Edges = []
 AdjMat = np.zeros((len(G.nodes), len(G.nodes)))
 for i in range(len(G)):
     for j in range(len(G)):
         if i < j:
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                if matrix[i][j]-matrix[j][i] >= 0:
-                    Edges.append(
-                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
-                else:
-                    Edges.append(
-                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
+                Edges.append((Nations[i], Nations[j], (matrix[i][j]+matrix[j][i])))
+                AdjMat[i][j] = matrix[i][j]+matrix[j][i]
+                AdjMat[j][i] = AdjMat[i][j]
             else:
                 pass
         else:
@@ -119,23 +117,31 @@ degree_dict = dict(G.degree(G.nodes()))
 # closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
 # print(closeness_centrality) #non so se è utile
 
-#hits=nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
-#print(hits)
-
 
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
+
+aaa=nx.current_flow_betweenness_centrality(G, weight='weight')
+print(aaa)
+bbb=nx.edge_current_flow_betweenness_centrality(G, weight='weight')
+print(bbb)
+ccc=nx.current_flow_closeness_centrality(G, weight='weight')
+print(ccc)
+ddd=nx.laplacian_centrality(G, weight='weight')
+print(ddd)
+
 
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
 
+
+
+
 plt.show()
+
 # degree fatto
 # matrice al quadrato
 # centralità di flusso, ho foto su cell
 # centralità di intermediazione di flusso
 # resistenza di flusso
 # pagerank?
-
-
-
