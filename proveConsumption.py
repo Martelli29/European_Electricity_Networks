@@ -207,7 +207,7 @@ def iterator(list):
             return False
     return True
 
-
+'''
 def magia():
     for i in range(len(G)):
         if NewImpExp[i] > 0.0:
@@ -235,17 +235,63 @@ def magia():
                     pass
         else:
             pass
+'''
+
+
+def magia():
+    for i in range(len(G)):
+        if NewImpExp[i] > 0.0:
+            NewImpExp[i] = NewImpExp[i]-1*10**3
+            non_zero_count = 0
+
+            for count in range(len(G)):
+                if matrix[i][count] != 0 and NewImpExp[count] < 1*10**3: # state that need electricity
+                    non_zero_count = non_zero_count+1 
+                else:
+                    pass
+
+            if non_zero_count!=0:
+                for j in range(len(G)):
+                    if matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**3:
+                        NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
+                    else:
+                        pass    
+                if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:#
+                    print(Nations[i], Nations[j],matrix[i][j], sum(NewImpExp), non_zero_count)#
+                    raise Exception("!=")#
+            elif non_zero_count==0:
+                for count in range(len(G)):
+                    if matrix[i][count] != 0:
+                        non_zero_count = non_zero_count+1
+                    else:
+                        pass
+                for j in range(len(G)):
+                    if matrix[i][j] != 0.0:
+                        NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
+                        if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:
+                            print(Nations[i], Nations[j], matrix [i][j], sum(NewImpExp))
+                            raise Exception("==")
+                    else:
+                        pass
+                if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:#
+                    print(Nations[i], Nations[j],matrix[i][j], sum(NewImpExp), non_zero_count)#
+                    raise Exception("!=")#
+        else:
+            pass
+
+
 mmm=0
 #'''
 while not iterator(NewImpExp):
     #mmm=mmm+1
     magia()
-print(sum(NewImpExp))
+    #print(mmm, sum(NewImpExp), NewImpExp[8])
+
 for i in range(len(G)):
     print(Nations[i],NewImpExp[i])
 #'''
 
-#magia()
+
 
 
 '''
