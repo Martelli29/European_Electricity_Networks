@@ -77,13 +77,16 @@ RealCarbonDensity = []
 
 
 def RCD():
+
     Num = []
     Den = []
     Cons = []
+
     for i in range(len(G)):
         num = 0
         den = 0
         cons = 0
+
         for j in range(len(G)):
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
                 num = num+matrix[j][i]*(8760*10**-9)*CarbonDensity2020[j]
@@ -93,9 +96,11 @@ def RCD():
                 pass
         else:
             pass
+
         Cons.append(cons)
         Num.append(num)
         Den.append(den)
+
         RealCarbonDensity.append(
             (TotalProduction2020[i]*CarbonDensity2020[i]+Num[i])/(Den[i]+TotalProduction2020[i]))
         TotalConsumption.append(TotalProduction2020[i]+(Cons[i]*(8760*10**-9)))
@@ -121,7 +126,6 @@ for i in range(len(G)):
 
 
 Edges = []
-AdjMat = np.zeros((len(G.nodes), len(G.nodes)))
 for i in range(len(G)):
     for j in range(len(G)):
         if i < j:
@@ -160,6 +164,10 @@ def draw():
 
 
 draw()
+
+
+
+
 
 CoalDeficit = []
 with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
@@ -200,12 +208,12 @@ for i in range(len(Nations)):
 print(sum(NewImpExp))
 
 
-
 def iterator(list):
     for i in list:
         if i >= 1*10**3:
             return False
     return True
+
 
 '''
 def magia():
@@ -237,6 +245,8 @@ def magia():
             pass
 '''
 
+NewMatrix = np.zeros((len(Nations), len(Nations)))
+
 
 def magia():
     for i in range(len(G)):
@@ -245,53 +255,84 @@ def magia():
             non_zero_count = 0
 
             for count in range(len(G)):
-                if matrix[i][count] != 0 and NewImpExp[count] < 1*10**3: # state that need electricity
-                    non_zero_count = non_zero_count+1 
+                # state that need electricity
+                if matrix[i][count] != 0 and NewImpExp[count] < 1*10**3:
+                    non_zero_count = non_zero_count+1
                 else:
                     pass
 
-            if non_zero_count!=0:
+            if non_zero_count != 0:
                 for j in range(len(G)):
                     if matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**3:
                         NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
+                        NewMatrix[i][j] = NewMatrix[i][j] + (1*10**3/non_zero_count)
+                        NewMatrix[j][i] = NewMatrix[j][i] - (1*10**3/non_zero_count)
                     else:
-                        pass    
-                if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:#
-                    print(Nations[i], Nations[j],matrix[i][j], sum(NewImpExp), non_zero_count)#
-                    raise Exception("!=")#
-            elif non_zero_count==0:
+                        pass
+
+                assert (sum(NewImpExp) < 1*10**3 or sum(NewImpExp) > -1*10**3)
+
+            elif non_zero_count == 0:
                 for count in range(len(G)):
                     if matrix[i][count] != 0:
                         non_zero_count = non_zero_count+1
                     else:
                         pass
+
                 for j in range(len(G)):
                     if matrix[i][j] != 0.0:
                         NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
-                        if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:
-                            print(Nations[i], Nations[j], matrix [i][j], sum(NewImpExp))
-                            raise Exception("==")
+                        NewMatrix[i][j] = NewMatrix[i][j] + (1*10**3/non_zero_count)
+                        NewMatrix[j][i] = NewMatrix[j][i] - (1*10**3/non_zero_count)
                     else:
                         pass
-                if sum(NewImpExp)>1*10**3 or sum(NewImpExp)<-1*10**3:#
-                    print(Nations[i], Nations[j],matrix[i][j], sum(NewImpExp), non_zero_count)#
-                    raise Exception("!=")#
+
+                assert (sum(NewImpExp) < 1*10**3 or sum(NewImpExp) > -1*10**3)
         else:
             pass
 
 
-mmm=0
-#'''
 while not iterator(NewImpExp):
-    #mmm=mmm+1
     magia()
-    #print(mmm, sum(NewImpExp), NewImpExp[8])
+
+
+NewEdges = []
+for i in range(len(G)):
+    for j in range(len(G)):
+        if i < j:
+            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+                if NewMatrix[i][j]-NewMatrix[j][i] >= 0:
+                    NewEdges.append(
+                        (Nations[i], Nations[j], (NewMatrix[i][j])))
+                else:
+                    NewEdges.append(
+                        (Nations[j], Nations[i], (NewMatrix[j][i])))
+            else:
+                pass
+        else:
+            pass
 
 for i in range(len(G)):
-    print(Nations[i],NewImpExp[i])
-#'''
+    print(Nations[i], NewImpExp[i])
+    for j in range(len(G)):
+        if NewMatrix[i][j] != 0:
+            print(Nations[i], Nations[j], NewMatrix[i][j])
 
 
+uG = nx.DiGraph()
+
+for i in range(len(Nations)):
+    uG.add_node(str(Nations[i]))
+
+uG.add_weighted_edges_from(NewEdges)
+
+
+Newedge_weights = [uG[u][v]['weight']/1800000 for u, v in uG.edges()]
+
+nx.draw(uG, pos=pos, node_size=[
+    x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)
+
+plt.show()
 
 
 '''
