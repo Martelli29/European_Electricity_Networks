@@ -166,8 +166,20 @@ def draw():
 draw()
 
 
+bcG=nx.Graph()
+bcMatrix=np.zeros((len(Nations), len(Nations)))
 
+for i in range(len(G)):
+    for j in range(len(G)):
+        if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+            bcG.add_edge(Nations[i],Nations[j])
+        else:
+            pass
 
+bc=nx.betweenness_centrality(bcG, normalized=False, weight=None, endpoints=True, seed=None)
+print(bc)
+bc = [bc[nation] for nation in Nations]
+print(bc, sum(bc))
 
 CoalDeficit = []
 with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
@@ -198,7 +210,9 @@ with open("Nations.txt", "r") as file:
 
 NewPower = []
 for i in range(len(Nations)):
-    NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)))
+    NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(bc[i]/sum(bc)))/2)
+print(sum(NewPower))
+
 
 NewImpExp = []
 for i in range(len(Nations)):
@@ -215,38 +229,8 @@ def iterator(list):
     return True
 
 
-'''
-def magia():
-    for i in range(len(G)):
-        if NewImpExp[i] > 0.0:
-            NewImpExp[i] = NewImpExp[i]-1*10**3
-            non_zero_count = 0
-            for count in range(len(G)):
-                if matrix[i][count] != 0 and NewImpExp[count] < 1*10**3: # state that need electricity
-                    non_zero_count = non_zero_count+1 
-                else:
-                    pass    
-            if non_zero_count==0:
-                for count in range(len(G)):
-                    if matrix[i][count] != 0:
-                        non_zero_count = non_zero_count+1
-                    else:
-                        pass    
-            else:
-                pass
-            for j in range(len(G)):
-                if non_zero_count == 0:
-                    pass
-                elif matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**3:
-                    NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
-                else:
-                    pass
-        else:
-            pass
-'''
 
 NewMatrix = np.zeros((len(Nations), len(Nations)))
-
 
 def magia():
     for i in range(len(G)):
