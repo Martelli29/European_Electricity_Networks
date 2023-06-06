@@ -11,8 +11,9 @@ CarbonDensity2020 = []
 with open("Nations.txt", "r") as file:
     next(file)  # skip first row
     row = next(file)  # second row
-    Nations = row.strip().split(",")
+    Nations = row.strip().split(",")  # get name of the nations from the file
 
+'''in this file we get the values of electricity production for each state'''
 with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
@@ -25,6 +26,7 @@ with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
 a = sum(TotalProduction2020)
 print(a)
 
+'''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
@@ -41,20 +43,25 @@ for i in range(len(Nations)):
 pes = sum(lista)/a
 print(pes)
 
-G = nx.DiGraph()
+
+G = nx.DiGraph()  # inizialization oh the graph
 
 
-def NodeConstruction():
+def NodeConstruction():  # construction of the node with the name of the state
     for i in range(len(Nations)):
         G.add_node(str(Nations[i]))
 
 
+'''setting of the position of the nodes in the graph'''
 pos = {'ALB': (1.1, -3), 'AUT': (0.3, -1), 'BIH': (0.7, -2), 'BEL': (-0.8, 0.5), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.6), 'HRV': (0.8, -1.5), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
        'ITA': (0, -2), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.5), 'MKD': (1.5, -3), 'MLT': (0, -3), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.2), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
 
 NodeConstruction()
 
-
+'''
+here there is the function that fill the matrix with the data
+of the import-export of the electricity through the state
+'''
 matrix = np.zeros((len(G.nodes), len(G.nodes)))
 
 
@@ -71,10 +78,12 @@ def FillMatrix():
 
 FillMatrix()
 
-
+'''
+This function is used for calculate the total consumption and carbon density for each state
+considering the contributes of the electricity import-export
+'''
 TotalConsumption = []
 RealCarbonDensity = []
-
 
 def RCD():
 
@@ -108,7 +117,10 @@ def RCD():
 
 RCD()
 
-
+'''
+This function is used for the color of the nodes in the visualization of the graph considering
+the carbon density of the electricity generation
+'''
 ColorMap = []
 for i in range(len(G)):
     if RealCarbonDensity[i] < 100.0:
@@ -124,7 +136,9 @@ for i in range(len(G)):
     elif RealCarbonDensity[i] >= 500:
         ColorMap.append("brown")
 
-
+'''
+This function creates the links og the graph
+'''
 Edges = []
 for i in range(len(G)):
     for j in range(len(G)):
@@ -154,6 +168,9 @@ degree_dict = dict(G.degree(G.nodes()))
 # hits = nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
 # print(hits)
 
+'''
+Graph drawing function
+'''
 def draw():
     edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
@@ -165,7 +182,10 @@ def draw():
 
 draw()
 
-
+'''
+Undirected unweighted graph created for the calculation of a closeness centrality
+used on the following code
+'''
 bcG = nx.Graph()
 bcMatrix = np.zeros((len(Nations), len(Nations)))
 
@@ -181,6 +201,7 @@ print(bc)
 bc = [bc[nation] for nation in Nations]
 print(bc, sum(bc))
 
+'''Creation of a list that has the coal production for each state that will be removed'''
 CoalDeficit = []
 with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
@@ -190,16 +211,23 @@ with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
         CoalDeficit.append(last_column)
     CoalDeficit = list(map(float, CoalDeficit))
 
+'''Electricity consumption without the coal'''
 ConsWithoutCoal = []
 for i in range(len(Nations)):
     ConsWithoutCoal.append(TotalConsumption[i]-CoalDeficit[i])
 
+
+'''There is the creation of two list, first one is a prevision of the total consumption
+for each state that in 2050 that has been hypothesized to be 40% greater.
+Second list is a calculation of a gap that each state have to be closed from the actual
+energy prouction without the coal and the future electricity consumption.'''
 NewCons = []
 Gap = []
 for i in range(len(Nations)):
     NewCons.append(TotalConsumption[i]+0.4*TotalConsumption[i])
     Gap.append(NewCons[i]-ConsWithoutCoal[i])
 
+'''Actual PIL of the states that will be used for the allocation of the new electricity supply'''
 PIL = []
 with open("Nations.txt", "r") as file:
     next(file)  # skip first row
@@ -208,8 +236,8 @@ with open("Nations.txt", "r") as file:
     PIL = row.strip().split(",")
     PIL = list(map(float, PIL))
 
+'''Allocation for each state of the new power'''
 NewPower = []
-
 
 def NewPowerFunction():
     for i in range(len(Nations)):
@@ -219,7 +247,7 @@ def NewPowerFunction():
 
 NewPowerFunction()
 
-
+'''Calculation of the balance of the electricity that each state has from the import-export'''
 NewImpExp = []
 for i in range(len(Nations)):
     NewImpExp.append(NewPower[i]-Gap[i])
@@ -227,7 +255,10 @@ for i in range(len(Nations)):
     print(Nations[i], NewImpExp[i])
 print(sum(NewImpExp))
 
-
+'''
+Function that allow to reorganize the new imp-exp balance in sucha a way that each state
+don't import an amount of electricity greater than 8% of the own total consumption.
+'''
 def calculator():
     for i in range(len(Nations)):
 
@@ -239,8 +270,7 @@ def calculator():
         else:
             pass
 
-
-
+'''iterator of the preview fucntion'''
 while NewImpExp[i] < 0 and (abs(NewImpExp[i])/NewCons[i] > 0.10 and abs(NewImpExp[i]) > 1*10**5):
     calculator()
 
@@ -249,15 +279,9 @@ for i in range(len(Nations)):
 print(sum(NewImpExp))
 
 
-def iterator(list):
-    for i in list:
-        if i >= 1*10**3:
-            return False
-    return True
 
-
+'''Function that calculate values that will be assigned to new links of the network'''
 NewMatrix = np.zeros((len(Nations), len(Nations)))
-
 
 def magia():
     for i in range(len(G)):
@@ -306,11 +330,17 @@ def magia():
         else:
             pass
 
+'''iterator of the preview fucntion'''
+def iterator(list):
+    for i in list:
+        if i >= 1*10**3:
+            return False
+    return True
 
 while not iterator(NewImpExp):
     magia()
 
-
+'''Function that create the links of the new network using tha value calculated from the preview function'''
 NewEdges = []
 for i in range(len(G)):
     for j in range(len(G)):
@@ -333,7 +363,7 @@ for i in range(len(G)):
         if NewMatrix[i][j] != 0:
             print(Nations[i], Nations[j], NewMatrix[i][j])
 
-
+'''Inizialization of the new graph'''
 uG = nx.DiGraph()
 
 for i in range(len(Nations)):
@@ -358,10 +388,3 @@ for i in range(len(Nations)):
     else:
         #add nuclear
 '''
-
-# degree fatto
-# matrice al quadrato
-# centralità di flusso, ho foto su cell
-# centralità di intermediazione di flusso
-# resistenza di flusso
-# pagerank?
