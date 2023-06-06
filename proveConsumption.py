@@ -166,17 +166,17 @@ def draw():
 draw()
 
 
-bcG=nx.Graph()
-bcMatrix=np.zeros((len(Nations), len(Nations)))
+bcG = nx.Graph()
+bcMatrix = np.zeros((len(Nations), len(Nations)))
 
 for i in range(len(G)):
     for j in range(len(G)):
         if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-            bcG.add_edge(Nations[i],Nations[j])
+            bcG.add_edge(Nations[i], Nations[j])
         else:
             pass
 
-bc=nx.betweenness_centrality(bcG, normalized=False, weight=None, endpoints=True, seed=None)
+bc = nx.closeness_centrality(bcG)
 print(bc)
 bc = [bc[nation] for nation in Nations]
 print(bc, sum(bc))
@@ -197,7 +197,7 @@ for i in range(len(Nations)):
 NewCons = []
 Gap = []
 for i in range(len(Nations)):
-    NewCons.append(TotalConsumption[i]+0.5*TotalConsumption[i])
+    NewCons.append(TotalConsumption[i]+0.4*TotalConsumption[i])
     Gap.append(NewCons[i]-ConsWithoutCoal[i])
 
 PIL = []
@@ -209,15 +209,42 @@ with open("Nations.txt", "r") as file:
     PIL = list(map(float, PIL))
 
 NewPower = []
-for i in range(len(Nations)):
-    NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(bc[i]/sum(bc)))/2)
-print(sum(NewPower))
+
+
+def NewPowerFunction():
+    for i in range(len(Nations)):
+        NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(bc[i]/sum(bc)))/2)
+        print(Nations[i], PIL[i]/sum(PIL), bc[i]/sum(bc))
+
+
+NewPowerFunction()
 
 
 NewImpExp = []
 for i in range(len(Nations)):
     NewImpExp.append(NewPower[i]-Gap[i])
     NewImpExp[i] = NewImpExp[i]/(8760*10**-9)
+    print(Nations[i], NewImpExp[i])
+print(sum(NewImpExp))
+
+
+def calculator():
+    for i in range(len(Nations)):
+
+        if NewImpExp[i] < 0 and (abs(NewImpExp[i])/NewCons[i] > 0.08 and abs(NewImpExp[i]) > 1*10**5):
+            newimpexp = 0.008*abs(NewImpExp[i])
+            NewImpExp[i] = NewImpExp[i]+0.008*abs(NewImpExp[i])
+            for j in range(len(Nations)):
+                NewImpExp[j] = NewImpExp[j]-(newimpexp*PIL[j]/sum(PIL))
+        else:
+            pass
+
+
+
+while NewImpExp[i] < 0 and (abs(NewImpExp[i])/NewCons[i] > 0.10 and abs(NewImpExp[i]) > 1*10**5):
+    calculator()
+
+for i in range(len(Nations)):
     print(Nations[i], NewImpExp[i])
 print(sum(NewImpExp))
 
@@ -229,8 +256,8 @@ def iterator(list):
     return True
 
 
-
 NewMatrix = np.zeros((len(Nations), len(Nations)))
+
 
 def magia():
     for i in range(len(G)):
@@ -249,12 +276,14 @@ def magia():
                 for j in range(len(G)):
                     if matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**3:
                         NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
-                        NewMatrix[i][j] = NewMatrix[i][j] + (1*10**3/non_zero_count)
-                        NewMatrix[j][i] = NewMatrix[j][i] - (1*10**3/non_zero_count)
+                        NewMatrix[i][j] = NewMatrix[i][j] + \
+                            (1*10**3/non_zero_count)
+                        NewMatrix[j][i] = NewMatrix[j][i] - \
+                            (1*10**3/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**3 or sum(NewImpExp) > -1*10**3)
+                assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
 
             elif non_zero_count == 0:
                 for count in range(len(G)):
@@ -266,12 +295,14 @@ def magia():
                 for j in range(len(G)):
                     if matrix[i][j] != 0.0:
                         NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
-                        NewMatrix[i][j] = NewMatrix[i][j] + (1*10**3/non_zero_count)
-                        NewMatrix[j][i] = NewMatrix[j][i] - (1*10**3/non_zero_count)
+                        NewMatrix[i][j] = NewMatrix[i][j] + \
+                            (1*10**3/non_zero_count)
+                        NewMatrix[j][i] = NewMatrix[j][i] - \
+                            (1*10**3/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**3 or sum(NewImpExp) > -1*10**3)
+                assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
         else:
             pass
 
@@ -311,7 +342,7 @@ for i in range(len(Nations)):
 uG.add_weighted_edges_from(NewEdges)
 
 
-Newedge_weights = [uG[u][v]['weight']/1800000 for u, v in uG.edges()]
+Newedge_weights = [uG[u][v]['weight']/1200000 for u, v in uG.edges()]
 
 nx.draw(uG, pos=pos, node_size=[
     x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)
