@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 Nations = []
-TotalProduction2020 = []
-CarbonDensity2020 = []
+TotalProduction = []
+CarbonDensity = []
 
 with open("Nations.txt", "r") as file:
     next(file)  # skip first row
@@ -19,11 +19,11 @@ with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
         last_column = row[-1]  # select last column
-        TotalProduction2020.append(last_column)
-    TotalProduction2020 = list(map(float, TotalProduction2020))
+        TotalProduction.append(last_column)
+    TotalProduction = list(map(float, TotalProduction))
 
 
-a = sum(TotalProduction2020)
+a = sum(TotalProduction)
 print(a)
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
@@ -32,12 +32,12 @@ with open("sharebysourceCarbonDensity.txt", "r") as file:
     next(file)  # skip first row
     for row in contribute:
         last_column = row[-1]  # select last column
-        CarbonDensity2020.append(last_column)
-    CarbonDensity2020 = list(map(float, CarbonDensity2020))
+        CarbonDensity.append(last_column)
+    CarbonDensity = list(map(float, CarbonDensity))
 
 lista = []
 for i in range(len(Nations)):
-    t = CarbonDensity2020[i]*TotalProduction2020[i]
+    t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
 pes = sum(lista)/a
@@ -85,6 +85,7 @@ considering the contributes of the electricity import-export
 TotalConsumption = []
 RealCarbonDensity = []
 
+
 def RCD():
 
     Num = []
@@ -98,7 +99,7 @@ def RCD():
 
         for j in range(len(G)):
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                num = num+matrix[j][i]*(8760*10**-9)*CarbonDensity2020[j]
+                num = num+matrix[j][i]*(8760*10**-9)*CarbonDensity[j]
                 den = den+matrix[j][i]*(8760*10**-9)
                 cons = cons-matrix[i][j] + matrix[j][i]
             else:
@@ -111,8 +112,8 @@ def RCD():
         Den.append(den)
 
         RealCarbonDensity.append(
-            (TotalProduction2020[i]*CarbonDensity2020[i]+Num[i])/(Den[i]+TotalProduction2020[i]))
-        TotalConsumption.append(TotalProduction2020[i]+(Cons[i]*(8760*10**-9)))
+            (TotalProduction[i]*CarbonDensity[i]+Num[i])/(Den[i]+TotalProduction[i]))
+        TotalConsumption.append(TotalProduction[i]+(Cons[i]*(8760*10**-9)))
 
 
 RCD()
@@ -137,7 +138,7 @@ for i in range(len(G)):
         ColorMap.append("brown")
 
 '''
-This function creates the links og the graph
+This function creates the links of the graph
 '''
 Edges = []
 for i in range(len(G)):
@@ -171,6 +172,8 @@ degree_dict = dict(G.degree(G.nodes()))
 '''
 Graph drawing function
 '''
+
+
 def draw():
     edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
@@ -196,10 +199,8 @@ for i in range(len(G)):
         else:
             pass
 
-bc = nx.closeness_centrality(bcG)
-print(bc)
-bc = [bc[nation] for nation in Nations]
-print(bc, sum(bc))
+cc = nx.closeness_centrality(bcG)
+cc = [cc[nation] for nation in Nations]
 
 '''Creation of a list that has the coal production for each state that will be removed'''
 CoalDeficit = []
@@ -217,10 +218,12 @@ for i in range(len(Nations)):
     ConsWithoutCoal.append(TotalConsumption[i]-CoalDeficit[i])
 
 
-'''There is the creation of two list, first one is a prevision of the total consumption
+'''
+There is the creation of two list, first one is a prevision of the total consumption
 for each state that in 2050 that has been hypothesized to be 40% greater.
 Second list is a calculation of a gap that each state have to be closed from the actual
-energy prouction without the coal and the future electricity consumption.'''
+energy prouction without the coal and the future electricity consumption.
+'''
 NewCons = []
 Gap = []
 for i in range(len(Nations)):
@@ -239,10 +242,11 @@ with open("Nations.txt", "r") as file:
 '''Allocation for each state of the new power'''
 NewPower = []
 
+
 def NewPowerFunction():
     for i in range(len(Nations)):
-        NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(bc[i]/sum(bc)))/2)
-        print(Nations[i], PIL[i]/sum(PIL), bc[i]/sum(bc))
+        NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
+        print(Nations[i], PIL[i]/sum(PIL), cc[i]/sum(cc))
 
 
 NewPowerFunction()
@@ -257,31 +261,55 @@ print(sum(NewImpExp))
 
 '''
 Function that allow to reorganize the new imp-exp balance in sucha a way that each state
-don't import an amount of electricity greater than 8% of the own total consumption.
+don't import an amount of electricity greater than 5% of the own total consumption.
 '''
+
+
 def calculator():
     for i in range(len(Nations)):
 
-        if NewImpExp[i] < 0 and (abs(NewImpExp[i])/NewCons[i] > 0.08 and abs(NewImpExp[i]) > 1*10**5):
-            newimpexp = 0.008*abs(NewImpExp[i])
-            NewImpExp[i] = NewImpExp[i]+0.008*abs(NewImpExp[i])
+        if NewImpExp[i] < 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.05):
+            newimpexp = 0.005*abs(NewImpExp[i])
+            NewImpExp[i] = NewImpExp[i]+0.005*abs(NewImpExp[i])
             for j in range(len(Nations)):
-                NewImpExp[j] = NewImpExp[j]-(newimpexp*PIL[j]/sum(PIL))
+                NewImpExp[j] = NewImpExp[j] - \
+                    (newimpexp*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
+        else:
+            pass
+        if NewImpExp[i] > 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.15):
+            newimpexp = 0.015*abs(NewImpExp[i])
+            NewImpExp[i] = NewImpExp[i]-0.015*abs(NewImpExp[i])
+            for j in range(len(Nations)):
+                NewImpExp[j] = NewImpExp[j] + \
+                    (newimpexp*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
         else:
             pass
 
-'''iterator of the preview fucntion'''
-while NewImpExp[i] < 0 and (abs(NewImpExp[i])/NewCons[i] > 0.10 and abs(NewImpExp[i]) > 1*10**5):
+
+'''iterator of the previous function'''
+
+
+def iterator2():
+    for i in range(len(Nations)):
+        if (NewImpExp[i] < 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (NewImpExp[i] > 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.15)):
+            return True
+    return False
+
+
+while iterator2():
     calculator()
+    print("iter2")
+    assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
+
 
 for i in range(len(Nations)):
-    print(Nations[i], NewImpExp[i])
+    print(Nations[i], NewImpExp[i], NewImpExp[i]*(8760*10**-9), NewCons[i])
 print(sum(NewImpExp))
-
 
 
 '''Function that calculate values that will be assigned to new links of the network'''
 NewMatrix = np.zeros((len(Nations), len(Nations)))
+
 
 def magia():
     for i in range(len(G)):
@@ -330,20 +358,24 @@ def magia():
         else:
             pass
 
-'''iterator of the preview fucntion'''
+
+'''iterator of the previous function'''
+
+
 def iterator(list):
     for i in list:
         if i >= 1*10**3:
-            return False
-    return True
+            return True
+    return False
 
-while not iterator(NewImpExp):
+
+while iterator(NewImpExp):
     magia()
 
-'''Function that create the links of the new network using tha value calculated from the preview function'''
+'''Function that create the links of the new network using tha value calculated from the previous function'''
 NewEdges = []
-for i in range(len(G)):
-    for j in range(len(G)):
+for i in range(len(Nations)):
+    for j in range(len(Nations)):
         if i < j:
             if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
                 if NewMatrix[i][j]-NewMatrix[j][i] >= 0:
@@ -357,9 +389,9 @@ for i in range(len(G)):
         else:
             pass
 
-for i in range(len(G)):
+for i in range(len(Nations)):
     print(Nations[i], NewImpExp[i])
-    for j in range(len(G)):
+    for j in range(len(Nations)):
         if NewMatrix[i][j] != 0:
             print(Nations[i], Nations[j], NewMatrix[i][j])
 
@@ -372,7 +404,7 @@ for i in range(len(Nations)):
 uG.add_weighted_edges_from(NewEdges)
 
 
-Newedge_weights = [uG[u][v]['weight']/1200000 for u, v in uG.edges()]
+Newedge_weights = [uG[u][v]['weight']/400000 for u, v in uG.edges()]
 
 nx.draw(uG, pos=pos, node_size=[
     x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)
