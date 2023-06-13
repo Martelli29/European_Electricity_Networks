@@ -208,7 +208,7 @@ with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
-        last_column = row[-2]
+        last_column = row[-4]
         CoalDeficit.append(last_column)
     CoalDeficit = list(map(float, CoalDeficit))
 
@@ -252,12 +252,12 @@ def NewPowerFunction():
 NewPowerFunction()
 
 '''Calculation of the balance of the electricity that each state has from the import-export'''
-NewImpExp = []
+Balance = []
 for i in range(len(Nations)):
-    NewImpExp.append(NewPower[i]-Gap[i])
-    NewImpExp[i] = NewImpExp[i]/(8760*10**-9)
-    print(Nations[i], NewImpExp[i])
-print(sum(NewImpExp))
+    Balance.append(NewPower[i]-Gap[i])
+    Balance[i] = Balance[i]/(8760*10**-9)
+    print(Nations[i], Balance[i])
+print(sum(Balance))
 
 '''
 Function that allow to reorganize the new imp-exp balance in sucha a way that each state
@@ -268,20 +268,20 @@ don't import an amount of electricity greater than 5% of the own total consumpti
 def calculator():
     for i in range(len(Nations)):
 
-        if NewImpExp[i] < 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.05):
-            newimpexp = 0.005*abs(NewImpExp[i])
-            NewImpExp[i] = NewImpExp[i]+0.005*abs(NewImpExp[i])
+        if Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05):
+            balance = 0.005*abs(Balance[i])
+            Balance[i] = Balance[i]+0.005*abs(Balance[i])
             for j in range(len(Nations)):
-                NewImpExp[j] = NewImpExp[j] - \
-                    (newimpexp*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
+                Balance[j] = Balance[j] - \
+                    (balance*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
         else:
             pass
-        if NewImpExp[i] > 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.15):
-            newimpexp = 0.015*abs(NewImpExp[i])
-            NewImpExp[i] = NewImpExp[i]-0.015*abs(NewImpExp[i])
+        if Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15):
+            balance = 0.015*abs(Balance[i])
+            Balance[i] = Balance[i]-0.015*abs(Balance[i])
             for j in range(len(Nations)):
-                NewImpExp[j] = NewImpExp[j] + \
-                    (newimpexp*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
+                Balance[j] = Balance[j] + \
+                    (balance*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
         else:
             pass
 
@@ -291,24 +291,27 @@ def calculator():
 
 def iterator2():
     for i in range(len(Nations)):
-        if (NewImpExp[i] < 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (NewImpExp[i] > 0 and (abs(NewImpExp[i])*(8760*10**-9)/NewCons[i] > 0.15)):
+        if (Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15)):
             return True
     return False
 
 
 while iterator2():
     calculator()
-    print("iter2")
-    assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
+    assert (sum(Balance) < 1*10**3 and sum(Balance) > -1*10**3)
 
 
 for i in range(len(Nations)):
-    print(Nations[i], NewImpExp[i], NewImpExp[i]*(8760*10**-9), NewCons[i])
-print(sum(NewImpExp))
+    print(Nations[i], Balance[i], Balance[i]*(8760*10**-9), NewCons[i])
+print(sum(Balance))
 
 
 '''Function that calculate values that will be assigned to new links of the network'''
 NewMatrix = np.zeros((len(Nations), len(Nations)))
+
+NewImpExp = []
+for i in range(len(Nations)):
+    NewImpExp.append(Balance[i])
 
 
 def magia():
@@ -395,6 +398,44 @@ for i in range(len(Nations)):
         if NewMatrix[i][j] != 0:
             print(Nations[i], Nations[j], NewMatrix[i][j])
 
+
+NewSupply = []
+for i in range(len(Nations)):
+    NewSupply.append(Gap[i]+Balance[i]*(8760*10**-9))
+    print(Nations[i], Gap[i], Balance[i], NewSupply[i])
+
+
+
+
+df = pd.read_csv("ElectricityProductionTWhFINAL.txt")
+SolarWind = []
+for i in range(len(Nations)):
+    SolarWind.append(float(df.iloc[i, 4])+float(df.iloc[i, 5]))
+print(SolarWind)
+
+
+AddNuclear = []
+AddSolarWind = []
+solarwind = []
+for i in range(len(Nations)):
+    solarwind.append(SolarWind[i])
+    AddSolarWind.append(0.0)
+    AddNuclear.append(0.0)
+
+    # 50% of the electricity supply have to come from wind and sun
+    while solarwind[i] <= 0.5*NewCons[i]+(Balance[i]*(8760*10**-9)):
+        solarwind[i] = solarwind[i]+0.1  # useful only for the while cycle
+        AddSolarWind[i] = AddSolarWind[i]+0.1  # 100 MW of new renewables added
+
+    # new consumption plus new solar/wind power, this variable will be used for the break condition of the next cycle
+    provv = ConsWithoutCoal[i]+AddSolarWind[i]+(Balance[i]*(8760*10**-9))
+    while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
+        provv = provv+0.1  # break condition
+        AddNuclear[i] = AddNuclear[i]+0.1  # new nuclear power
+    print(Nations[i],AddSolarWind[i],AddNuclear[i])
+
+
+
 '''Inizialization of the new graph'''
 uG = nx.DiGraph()
 
@@ -410,13 +451,3 @@ nx.draw(uG, pos=pos, node_size=[
     x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)
 
 plt.show()
-
-
-'''
-SolWinSupp=[]
-for i in range(len(Nations)):
-    if #pd.solare+pd.eolico>0.5*TotalConsumption:
-        #add renew
-    else:
-        #add nuclear
-'''
