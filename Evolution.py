@@ -14,7 +14,7 @@ with open("Nations.txt", "r") as file:
     Nations = row.strip().split(",")  # get name of the nations from the file
 
 '''in this file we get the values of electricity production for each state'''
-with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
+with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
@@ -204,11 +204,11 @@ cc = [cc[nation] for nation in Nations]
 
 '''Creation of a list that has the coal production for each state that will be removed'''
 CoalDeficit = []
-with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
+with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
-        last_column = row[-4]
+        last_column = row[1]
         CoalDeficit.append(last_column)
     CoalDeficit = list(map(float, CoalDeficit))
 
@@ -407,10 +407,10 @@ for i in range(len(Nations)):
 
 
 
-df = pd.read_csv("ElectricityProductionTWhFINAL.txt")
+df = pd.read_csv("Electricity_Production_TWh_FINAL.txt")
 SolarWind = []
 for i in range(len(Nations)):
-    SolarWind.append(float(df.iloc[i, 4])+float(df.iloc[i, 5]))
+    SolarWind.append(float(df.iloc[i, 5])+float(df.iloc[i, 7]))
 print(SolarWind)
 
 
@@ -433,6 +433,18 @@ for i in range(len(Nations)):
         provv = provv+0.1  # break condition
         AddNuclear[i] = AddNuclear[i]+0.1  # new nuclear power
     print(Nations[i],AddSolarWind[i],AddNuclear[i])
+
+
+
+
+'''
+df=pd.read_csv("DataSet/share-elec-produc-by-source-FILTERED.txt")
+df=
+'''
+
+
+
+
 
 
 
