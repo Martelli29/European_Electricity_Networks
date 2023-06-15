@@ -4,14 +4,21 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-Nations = []
+
 TotalProduction = []
 CarbonDensity = []
 
-with open("Nations.txt", "r") as file:
-    next(file)  # skip first row
-    row = next(file)  # second row
-    Nations = row.strip().split(",")  # get name of the nations from the file
+'''This function get the names of the nodes of the network'''
+def GetName():
+    nations = []
+    with open("Nations.txt", "r") as file:
+        next(file)  # skip first row
+        row = next(file)  # second row
+        nations = row.strip().split(",")  # get name of the nations from the file
+    return nations
+
+
+Nations = GetName()
 
 '''in this file we get the values of electricity production for each state'''
 with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
@@ -60,10 +67,9 @@ NodeConstruction()
 
 '''
 here there is the function that fill the matrix with the data
-of the import-export of the electricity through the state
+of the import-export of the electricity through the states.
 '''
 matrix = np.zeros((len(G.nodes), len(G.nodes)))
-
 
 def FillMatrix():
     df = pd.read_csv("Imp-Exp_2017-19.txt")
@@ -82,11 +88,10 @@ FillMatrix()
 This function is used for calculate the total consumption and carbon density for each state
 considering the contributes of the electricity import-export
 '''
-TotalConsumption = []
-RealCarbonDensity = []
-
 
 def RCD():
+    totalconsumption = []
+    realcarbondensity = []
 
     Num = []
     Den = []
@@ -111,68 +116,66 @@ def RCD():
         Num.append(num)
         Den.append(den)
 
-        RealCarbonDensity.append(
+        realcarbondensity.append(
             (TotalProduction[i]*CarbonDensity[i]+Num[i])/(Den[i]+TotalProduction[i]))
-        TotalConsumption.append(TotalProduction[i]+(Cons[i]*(8760*10**-9)))
+        totalconsumption.append(TotalProduction[i]+(Cons[i]*(8760*10**-9)))
 
+    return totalconsumption, realcarbondensity
 
-RCD()
-
-'''
-This function is used for the color of the nodes in the visualization of the graph considering
-the carbon density of the electricity generation
-'''
-ColorMap = []
-for i in range(len(G)):
-    if RealCarbonDensity[i] < 100.0:
-        ColorMap.append("green")
-    elif RealCarbonDensity[i] >= 100 and RealCarbonDensity[i] < 200:
-        ColorMap.append("lightgreen")
-    elif RealCarbonDensity[i] >= 200 and RealCarbonDensity[i] < 300:
-        ColorMap.append("yellow")
-    elif RealCarbonDensity[i] >= 300 and RealCarbonDensity[i] < 400:
-        ColorMap.append("orange")
-    elif RealCarbonDensity[i] >= 400 and RealCarbonDensity[i] < 500:
-        ColorMap.append("red")
-    elif RealCarbonDensity[i] >= 500:
-        ColorMap.append("brown")
+TotalConsumption, RealCarbonDensity = RCD()
 
 '''
-This function creates the links of the graph
+This function is used for the color of the nodes in the visualization of the graph, colors represent
+the carbon density of the electric generation.
 '''
-Edges = []
-for i in range(len(G)):
-    for j in range(len(G)):
-        if i < j:
-            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                if matrix[i][j]-matrix[j][i] >= 0:
-                    Edges.append(
-                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
+def NodeColor(list):
+    colormap = []
+    for i in range(len(G)):
+        if list[i] < 100.0:
+            colormap.append("green")
+        elif list[i] >= 100 and list[i] < 200:
+            colormap.append("lightgreen")
+        elif list[i] >= 200 and list[i] < 300:
+            colormap.append("yellow")
+        elif list[i] >= 300 and list[i] < 400:
+            colormap.append("orange")
+        elif list[i] >= 400 and list[i] < 500:
+            colormap.append("red")
+        elif list[i] >= 500:
+            colormap.append("brown")
+    return colormap        
+
+ColorMap=NodeColor(RealCarbonDensity)
+
+'''
+This function creates the links of the graph.
+'''
+def NetworkEdges():
+    edges = []
+    for i in range(len(G)):
+        for j in range(len(G)):
+            if i < j:
+                if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+                    if matrix[i][j]-matrix[j][i] >= 0:
+                        edges.append(
+                            (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
+                    else:
+                        edges.append(
+                            (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
                 else:
-                    Edges.append(
-                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
+                    pass
             else:
                 pass
-        else:
-            pass
-
-G.add_weighted_edges_from(Edges)
-degree_dict = dict(G.degree(G.nodes()))
+    return edges
 
 
-# bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
-# print(bc) #non so se è utile
+Edges = NetworkEdges() # Used for the assignement of the links to the network
+G.add_weighted_edges_from(Edges) 
 
-# closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
-# print(closeness_centrality) #non so se è utile
-
-# hits = nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
-# print(hits)
 
 '''
 Graph drawing function
 '''
-
 
 def draw():
     edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
@@ -203,14 +206,20 @@ cc = nx.closeness_centrality(bcG)
 cc = [cc[nation] for nation in Nations]
 
 '''Creation of a list that has the coal production for each state that will be removed'''
-CoalDeficit = []
-with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
-    TotalEnergy = csv.reader(file)
-    next(TotalEnergy)   # skip first row
-    for row in TotalEnergy:
-        last_column = row[1]
-        CoalDeficit.append(last_column)
-    CoalDeficit = list(map(float, CoalDeficit))
+
+def CoalDeficitCalculator():
+    coaldeficit = []
+    with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
+        TotalEnergy = csv.reader(file)
+        next(TotalEnergy)   # skip first row
+        for row in TotalEnergy:
+            last_column = row[1]
+            coaldeficit.append(last_column)
+        coaldeficit = list(map(float, coaldeficit))
+    return coaldeficit
+
+
+CoalDeficit = CoalDeficitCalculator()
 
 '''Electricity consumption without the coal'''
 ConsWithoutCoal = []
@@ -230,7 +239,7 @@ for i in range(len(Nations)):
     NewCons.append(TotalConsumption[i]+0.4*TotalConsumption[i])
     Gap.append(NewCons[i]-ConsWithoutCoal[i])
 
-'''Actual PIL of the states that will be used for the allocation of the new electricity supply'''
+'''Actual PIL of the states that will be used as a criterion for the allocation of the new electricity supply.'''
 PIL = []
 with open("Nations.txt", "r") as file:
     next(file)  # skip first row
@@ -240,16 +249,15 @@ with open("Nations.txt", "r") as file:
     PIL = list(map(float, PIL))
 
 '''Allocation for each state of the new power'''
-NewPower = []
-
 
 def NewPowerFunction():
+    newpower = []
     for i in range(len(Nations)):
-        NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
+        newpower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
         print(Nations[i], PIL[i]/sum(PIL), cc[i]/sum(cc))
+    return newpower
 
-
-NewPowerFunction()
+NewPower = NewPowerFunction()
 
 '''Calculation of the balance of the electricity that each state has from the import-export'''
 Balance = []
@@ -263,7 +271,6 @@ print(sum(Balance))
 Function that allow to reorganize the new imp-exp balance in sucha a way that each state
 don't import an amount of electricity greater than 5% of the own total consumption.
 '''
-
 
 def calculator():
     for i in range(len(Nations)):
@@ -285,16 +292,13 @@ def calculator():
         else:
             pass
 
-
-'''iterator of the previous function'''
-
+'''iterator of the previous function, this function run until the previous condition is satsfied.'''
 
 def iterator2():
     for i in range(len(Nations)):
         if (Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15)):
             return True
     return False
-
 
 while iterator2():
     calculator()
@@ -312,7 +316,6 @@ NewMatrix = np.zeros((len(Nations), len(Nations)))
 NewImpExp = []
 for i in range(len(Nations)):
     NewImpExp.append(Balance[i])
-
 
 def magia():
     for i in range(len(G)):
@@ -361,10 +364,7 @@ def magia():
         else:
             pass
 
-
 '''iterator of the previous function'''
-
-
 def iterator(list):
     for i in list:
         if i >= 1*10**3:
@@ -375,7 +375,7 @@ def iterator(list):
 while iterator(NewImpExp):
     magia()
 
-'''Function that create the links of the new network using tha value calculated from the previous function'''
+'''Function that create the links of the evoluted network using the value calculated from the previous function'''
 NewEdges = []
 for i in range(len(Nations)):
     for j in range(len(Nations)):
@@ -405,48 +405,76 @@ for i in range(len(Nations)):
     print(Nations[i], Gap[i], Balance[i], NewSupply[i])
 
 
+'''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
+def NewCleanEnergy():
+    addnuclear = []
+    addsolarwind = []
+    SolarWind = []
 
+    df = pd.read_csv("Electricity_Production_TWh_FINAL.txt")
+    for i in range(len(Nations)):
+        SolarWind.append(float(df.iloc[i, 5])+float(df.iloc[i, 7]))
 
-df = pd.read_csv("Electricity_Production_TWh_FINAL.txt")
-SolarWind = []
+    solarwind = []
+    for i in range(len(Nations)):
+        solarwind.append(SolarWind[i])
+        addsolarwind.append(0.0)
+        addnuclear.append(0.0)
+
+        # 50% of the electricity supply have to come from wind and sun
+        while solarwind[i] <= 0.5*NewCons[i]+(Balance[i]*(8760*10**-9)):
+            solarwind[i] = solarwind[i]+0.1  # useful only for the while cycle
+            addsolarwind[i] = addsolarwind[i]+0.1  # 100 MW of new renewables added
+
+        # new consumption plus new solar/wind power, this variable will be used for the break condition of the next cycle
+        provv = ConsWithoutCoal[i]+addsolarwind[i]+(Balance[i]*(8760*10**-9))
+        while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
+            provv = provv+0.1  # break condition
+            addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
+        print(Nations[i], addsolarwind[i], addnuclear[i])
+    
+    return addsolarwind, addnuclear
+
+AddSolarWind, AddNuclear=NewCleanEnergy()
+NewSolar=[]
+NewWind=[]
+NewNuclear=[]
 for i in range(len(Nations)):
-    SolarWind.append(float(df.iloc[i, 5])+float(df.iloc[i, 7]))
-print(SolarWind)
-
-
-AddNuclear = []
-AddSolarWind = []
-solarwind = []
-for i in range(len(Nations)):
-    solarwind.append(SolarWind[i])
-    AddSolarWind.append(0.0)
-    AddNuclear.append(0.0)
-
-    # 50% of the electricity supply have to come from wind and sun
-    while solarwind[i] <= 0.5*NewCons[i]+(Balance[i]*(8760*10**-9)):
-        solarwind[i] = solarwind[i]+0.1  # useful only for the while cycle
-        AddSolarWind[i] = AddSolarWind[i]+0.1  # 100 MW of new renewables added
-
-    # new consumption plus new solar/wind power, this variable will be used for the break condition of the next cycle
-    provv = ConsWithoutCoal[i]+AddSolarWind[i]+(Balance[i]*(8760*10**-9))
-    while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
-        provv = provv+0.1  # break condition
-        AddNuclear[i] = AddNuclear[i]+0.1  # new nuclear power
-    print(Nations[i],AddSolarWind[i],AddNuclear[i])
-
-
+    NewSolar.append(AddSolarWind[i]/1000)
+    NewWind.append(AddSolarWind[i]/2500)
+    NewNuclear.append(AddNuclear[i]/7500)
 
 
 '''
-df=pd.read_csv("DataSet/share-elec-produc-by-source-FILTERED.txt")
-df=
+This function is used for the calculation of the carbon density of the states, it will be used 
+for the creation of the nodes on the graph.
 '''
+def GetCarbonDensity2050():
+    Num = []
+    Den=[]
+    IncrNum=[]
+    IncrDen=[]
+    carbonDensity2050=[]
+    with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
+        f = csv.reader(file)
+        next(f)   # skip first row
+        for row in f:
+            num = (float(row[2])*490+float(row[3])*24+float(row[5])*44+float(row[7])*11+float(row[6])*650+float(row[8])*12+float(row[4])*230)/(float(row[9])-float(row[1]))
+            den = float(row[9])-float(row[1])
+            Num.append(num)
+            Den.append(den)
+        for i in range(len(Nations)):
+            incrnum=(AddNuclear[i]*12+AddSolarWind[i]*44)/(AddNuclear[i]+AddSolarWind[i])
+            incrden=AddNuclear[i]+AddSolarWind[i]
+            IncrNum.append(incrnum)
+            IncrDen.append(incrden)
+            carbonDensity2050.append((Num[i]*Den[i]+IncrNum[i]*IncrDen[i])/(Den[i]+IncrDen[i]))
+        carbonDensity2050 = list(map(float, carbonDensity2050))
+    print(carbonDensity2050)
 
+    return carbonDensity2050
 
-
-
-
-
+CarbonDensity2050=GetCarbonDensity2050()
 
 '''Inizialization of the new graph'''
 uG = nx.DiGraph()
@@ -458,6 +486,8 @@ uG.add_weighted_edges_from(NewEdges)
 
 
 Newedge_weights = [uG[u][v]['weight']/400000 for u, v in uG.edges()]
+
+ColorMap=NodeColor(CarbonDensity2050)
 
 nx.draw(uG, pos=pos, node_size=[
     x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)

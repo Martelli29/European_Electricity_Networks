@@ -5,23 +5,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 Nations = []
-TotalProduction2020 = []
-CarbonDensity2020 = []
+TotalProduction = []
+CarbonDensity = []
 
 with open("Nations.txt", "r") as file:
     next(file)  # skip first row
     row = next(file)  # second row
     Nations = row.strip().split(",")
 
-with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
+with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
         last_column = row[-1]  # select last column
-        TotalProduction2020.append(last_column)
-    TotalProduction2020 = list(map(float, TotalProduction2020))
+        TotalProduction.append(last_column)
+    TotalProduction = list(map(float, TotalProduction))
 
-a = sum(TotalProduction2020)
+a = sum(TotalProduction)
 print(a)
 
 with open("sharebysourceCarbonDensity.txt", "r") as file:
@@ -29,12 +29,12 @@ with open("sharebysourceCarbonDensity.txt", "r") as file:
     next(file)  # skip first row
     for row in contribute:
         last_column = row[-1]  # select last column
-        CarbonDensity2020.append(last_column)
-    CarbonDensity2020 = list(map(float, CarbonDensity2020))
+        CarbonDensity.append(last_column)
+    CarbonDensity = list(map(float, CarbonDensity))
 
 lista=[]
 for i in range(len(Nations)):
-    t=CarbonDensity2020[i]*TotalProduction2020[i]
+    t=CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
 pes=sum(lista)/a    
@@ -55,17 +55,17 @@ NodeConstruction()
 
 ColorMap = []
 for i in range(len(G)):
-    if CarbonDensity2020[i] < 100.0:
+    if CarbonDensity[i] < 100.0:
         ColorMap.append("green")
-    elif CarbonDensity2020[i] >= 100 and CarbonDensity2020[i] < 200:
+    elif CarbonDensity[i] >= 100 and CarbonDensity[i] < 200:
         ColorMap.append("lightgreen")
-    elif CarbonDensity2020[i] >= 200 and CarbonDensity2020[i] < 300:
+    elif CarbonDensity[i] >= 200 and CarbonDensity[i] < 300:
         ColorMap.append("yellow")
-    elif CarbonDensity2020[i] >= 300 and CarbonDensity2020[i] < 400:
+    elif CarbonDensity[i] >= 300 and CarbonDensity[i] < 400:
         ColorMap.append("orange")
-    elif CarbonDensity2020[i] >= 400 and CarbonDensity2020[i] < 500:
+    elif CarbonDensity[i] >= 400 and CarbonDensity[i] < 500:
         ColorMap.append("red")
-    elif CarbonDensity2020[i] >= 500:
+    elif CarbonDensity[i] >= 500:
         ColorMap.append("brown")
 
 
@@ -112,30 +112,13 @@ degree_dict = dict(G.degree(G.nodes()))
 
 
 
-
-#bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
-#print(bc) #non so se è utile
-
-# closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
-# print(closeness_centrality) #non so se è utile
-
-#hits=nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
-#print(hits)
+hits=nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
+print(hits)
 
 
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
 nx.draw(G, pos=pos, node_size=[
-        x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
-
+        x * 8 for x in TotalProduction], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
 plt.show()
-# degree fatto
-# matrice al quadrato
-# centralità di flusso, ho foto su cell
-# centralità di intermediazione di flusso
-# resistenza di flusso
-# pagerank?
-
-
-

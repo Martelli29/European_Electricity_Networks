@@ -13,7 +13,7 @@ with open("Nations.txt", "r") as file:
     row = next(file)  # second row
     Nations = row.strip().split(",")
 
-with open('ElectricityProductionTWhFINAL.txt', 'r') as file:
+with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
@@ -83,8 +83,6 @@ def FillMatrix():
                 pass
 
 
-
-
 FillMatrix()
 
 
@@ -107,41 +105,25 @@ G.add_weighted_edges_from(Edges)
 degree_dict = dict(G.degree(G.nodes()))
 
 
-
-
-
-
-#bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
-#print(bc) #non so se è utile
-
-# closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
-# print(closeness_centrality) #non so se è utile
-
-
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
-aaa=nx.current_flow_betweenness_centrality(G, weight='weight')
-print(aaa)
-bbb=nx.edge_current_flow_betweenness_centrality(G, weight='weight')
-print(bbb)
-ccc=nx.current_flow_closeness_centrality(G, weight='weight')
-print(ccc)
-ddd=nx.laplacian_centrality(G, weight='weight')
-print(ddd)
-
+def centralities():
+    currentflow=nx.current_flow_betweenness_centrality(G, weight='weight')
+    currentflow=sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
+    print(currentflow)
+    edgecurrentflow=nx.edge_current_flow_betweenness_centrality(G, weight='weight')
+    edgecurrentflow=sorted(edgecurrentflow.items(), key=lambda x: x[1], reverse=True)
+    print(edgecurrentflow)
+    currentflowcloseness=nx.current_flow_closeness_centrality(G, weight='weight')
+    currentflowcloseness=sorted(currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
+    print(currentflowcloseness)
+    laplacian=nx.laplacian_centrality(G, weight='weight')
+    laplacian=sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
+    print(laplacian)
+centralities()
 
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
 
-
-
-
 plt.show()
-
-# degree fatto
-# matrice al quadrato
-# centralità di flusso, ho foto su cell
-# centralità di intermediazione di flusso
-# resistenza di flusso
-# pagerank?
