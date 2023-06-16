@@ -4,75 +4,91 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-Nations = []
-TotalProduction2020 = []
-CarbonDensity2020 = []
 
-with open("Nations.txt", "r") as file:
-    next(file)  # skip first row
-    row = next(file)  # second row
-    Nations = row.strip().split(",")
+TotalProduction = []
+CarbonDensity = []
 
-with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
+
+'''This function get the names of the nodes of the network'''
+
+
+def GetName():
+    nations = []
+    with open("Nations.txt", "r") as file:
+        next(file)  # skip first row
+        row = next(file)  # second row
+        nations = row.strip().split(",")  # get name of the nations from the file
+    return nations
+
+
+Nations = GetName()
+
+'''in this file we get the values of electricity production for each state'''
+with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
         last_column = row[-1]  # select last column
-        TotalProduction2020.append(last_column)
-    TotalProduction2020 = list(map(float, TotalProduction2020))
+        TotalProduction.append(last_column)
+    TotalProduction = list(map(float, TotalProduction))
 
-a = sum(TotalProduction2020)
+a = sum(TotalProduction)
 print(a)
 
+'''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
     for row in contribute:
         last_column = row[-1]  # select last column
-        CarbonDensity2020.append(last_column)
-    CarbonDensity2020 = list(map(float, CarbonDensity2020))
+        CarbonDensity.append(last_column)
+    CarbonDensity = list(map(float, CarbonDensity))
 
-lista=[]
+lista = []
 for i in range(len(Nations)):
-    t=CarbonDensity2020[i]*TotalProduction2020[i]
+    t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
-pes=sum(lista)/a    
+pes = sum(lista)/a
 print(pes)
 
-G = nx.Graph()
+G = nx.Graph()  # inizialization of the graph
 
 
-def NodeConstruction():
+def NodeConstruction():  # construction of the node with the name of the states
     for i in range(len(Nations)):
         G.add_node(str(Nations[i]))
 
 
-pos = {'ALB': (1.1, -3), 'AUT': (0.3, -1), 'BIH': (0.7, -2), 'BEL': (-0.8, 0.5), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.6), 'HRV': (0.8, -1.5), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
-       'ITA': (0, -2), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.5), 'MKD': (1.5, -3), 'MLT': (0, -3), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.2), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
+pos = {'ALB': (1.1, -3.1), 'AUT': (0.3, -1.3), 'BIH': (0.7, -2.5), 'BEL': (-0.9, 0.4), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1.3), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.8), 'HRV': (0.8, -1.9), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
+       'ITA': (0, -3), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.8), 'MKD': (1.5, -3), 'MLT': (0, -3.8), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.5), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
 
 NodeConstruction()
 
 ColorMap = []
 for i in range(len(G)):
-    if CarbonDensity2020[i] < 100.0:
+    if CarbonDensity[i] < 100.0:
         ColorMap.append("green")
-    elif CarbonDensity2020[i] >= 100 and CarbonDensity2020[i] < 200:
+    elif CarbonDensity[i] >= 100 and CarbonDensity[i] < 200:
         ColorMap.append("lightgreen")
-    elif CarbonDensity2020[i] >= 200 and CarbonDensity2020[i] < 300:
+    elif CarbonDensity[i] >= 200 and CarbonDensity[i] < 300:
         ColorMap.append("yellow")
-    elif CarbonDensity2020[i] >= 300 and CarbonDensity2020[i] < 400:
+    elif CarbonDensity[i] >= 300 and CarbonDensity[i] < 400:
         ColorMap.append("orange")
-    elif CarbonDensity2020[i] >= 400 and CarbonDensity2020[i] < 500:
+    elif CarbonDensity[i] >= 400 and CarbonDensity[i] < 500:
         ColorMap.append("red")
-    elif CarbonDensity2020[i] >= 500:
+    elif CarbonDensity[i] >= 500:
         ColorMap.append("brown")
 
+'''
+here there is the function that fill the Matrix with the data
+of the import-export of the electricity through the states.
+'''
 
-matrix = np.zeros((len(G.nodes), len(G.nodes)))
 
 
 def FillMatrix():
+    matrix = np.zeros((len(G.nodes), len(G.nodes)))
     df = pd.read_csv("Imp-Exp_2017-19.txt")
     for i in range(len(G.nodes)):
         for j in range(len(G.nodes)):
@@ -82,48 +98,58 @@ def FillMatrix():
             else:
                 pass
 
+    return matrix
 
-FillMatrix()
+Matrix=FillMatrix()
 
-
-Edges = []
-AdjMat = np.zeros((len(G.nodes), len(G.nodes)))
-for i in range(len(G)):
-    for j in range(len(G)):
-        if i < j:
-            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                Edges.append((Nations[i], Nations[j], (matrix[i][j]+matrix[j][i])))
-                AdjMat[i][j] = matrix[i][j]+matrix[j][i]
-                AdjMat[j][i] = AdjMat[i][j]
+'''
+This function creates the links of the graph.
+'''
+def NetworkEdges():
+    edges = []
+    for i in range(len(G)):
+        for j in range(len(G)):
+            if i < j:
+                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
+                    edges.append(
+                        (Nations[i], Nations[j], (Matrix[i][j]+Matrix[j][i])))
+                else:
+                    pass
             else:
                 pass
-        else:
-            pass
+    
+    return edges
 
-
+Edges=NetworkEdges()
 G.add_weighted_edges_from(Edges)
-degree_dict = dict(G.degree(G.nodes()))
 
 
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
+''''''
 def centralities():
-    currentflow=nx.current_flow_betweenness_centrality(G, weight='weight')
-    currentflow=sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
+    currentflow = nx.current_flow_betweenness_centrality(G, weight='weight')
+    currentflow = sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
     print(currentflow)
-    edgecurrentflow=nx.edge_current_flow_betweenness_centrality(G, weight='weight')
-    edgecurrentflow=sorted(edgecurrentflow.items(), key=lambda x: x[1], reverse=True)
+    edgecurrentflow = nx.edge_current_flow_betweenness_centrality(
+        G, weight='weight')
+    edgecurrentflow = sorted(edgecurrentflow.items(),
+                             key=lambda x: x[1], reverse=True)
     print(edgecurrentflow)
-    currentflowcloseness=nx.current_flow_closeness_centrality(G, weight='weight')
-    currentflowcloseness=sorted(currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
+    currentflowcloseness = nx.current_flow_closeness_centrality(
+        G, weight='weight')
+    currentflowcloseness = sorted(
+        currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
     print(currentflowcloseness)
-    laplacian=nx.laplacian_centrality(G, weight='weight')
-    laplacian=sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
+    laplacian = nx.laplacian_centrality(G, weight='weight')
+    laplacian = sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
     print(laplacian)
+
+
 centralities()
 
 nx.draw(G, pos=pos, node_size=[
-        x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
+        x * 8 for x in TotalProduction], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
 
 plt.show()

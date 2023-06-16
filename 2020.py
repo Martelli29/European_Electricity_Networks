@@ -4,15 +4,26 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-Nations = []
+
 TotalProduction2020 = []
 CarbonDensity2020 = []
 
-with open("Nations.txt", "r") as file:
-    next(file)  # salta la prima riga
-    row = next(file)  # stampa la seconda riga
-    Nations = row.strip().split(",")
 
+'''This function get the names of the nodes of the network'''
+
+
+def GetName():
+    nations = []
+    with open("Nations.txt", "r") as file:
+        next(file)  # skip first row
+        row = next(file)  # second row
+        nations = row.strip().split(",")  # get name of the nations from the file
+    return nations
+
+
+Nations = GetName()
+
+'''in this file we get the values of electricity production for each state'''
 with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)
@@ -24,6 +35,7 @@ with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
 a = sum(TotalProduction2020)
 print(a)
 
+'''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("share-by-source2020+Carbon_Density.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
@@ -32,24 +44,24 @@ with open("share-by-source2020+Carbon_Density.txt", "r") as file:
         CarbonDensity2020.append(last_column)
     CarbonDensity2020 = list(map(float, CarbonDensity2020))
 
-lista=[]
+lista = []
 for i in range(len(Nations)):
-    t=CarbonDensity2020[i]*TotalProduction2020[i]
+    t = CarbonDensity2020[i]*TotalProduction2020[i]
     lista.append(t)
 
-pes=sum(lista)/a    
+pes = sum(lista)/a
 print(pes)
 
-G = nx.DiGraph()
+G = nx.DiGraph()  # inizialization of the graph
 
 
-def NodeConstruction():
+def NodeConstruction():  # construction of the node with the name of the states
     for i in range(len(Nations)):
         G.add_node(str(Nations[i]))
 
 
-pos = {'ALB': (1.1, -3), 'AUT': (0.3, -1), 'BIH': (0.7, -2), 'BEL': (-0.8, 0.5), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.6), 'HRV': (0.8, -1.5), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
-       'ITA': (0, -2), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.5), 'MKD': (1.5, -3), 'MLT': (0, -3), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.2), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
+pos = {'ALB': (1.1, -3.1), 'AUT': (0.3, -1.3), 'BIH': (0.7, -2.5), 'BEL': (-0.9, 0.4), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1.3), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.8), 'HRV': (0.8, -1.9), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
+       'ITA': (0, -3), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.8), 'MKD': (1.5, -3), 'MLT': (0, -3.8), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.5), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
 
 NodeConstruction()
 
@@ -68,11 +80,15 @@ for i in range(len(G)):
     elif CarbonDensity2020[i] >= 500:
         ColorMap.append("brown")
 
+'''
+here there is the function that fill the Matrix with the data
+of the import-export of the electricity through the states.
+'''
 
-matrix = np.zeros((len(G.nodes), len(G.nodes)))
 
 
 def FillMatrix():
+    matrix = np.zeros((len(G.nodes), len(G.nodes)))
     df = pd.read_csv("Imp-Exp_2020.txt")
     for i in range(len(G.nodes)):
         for j in range(len(G.nodes)):
@@ -81,47 +97,38 @@ def FillMatrix():
                     df['target'] == Nations[j]), 'value'].iloc[0]
             else:
                 pass
+    
+    return matrix
 
 
-FillMatrix()
+Matrix=FillMatrix()
 
-Weights = []
 
-for i in range(len(G)):
-    for j in range(len(G)):
-        if i < j:
-            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                Weights.append(matrix[i][j]-matrix[j][i])
-            else:
-                pass
-        else:
-            pass
 
-Edges = []
-AdjMat = np.zeros((len(G.nodes), len(G.nodes)))
-for i in range(len(G)):
-    for j in range(len(G)):
-        if i < j:
-            if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
-                if matrix[i][j]-matrix[j][i] >= 0:
-                    Edges.append(
-                        (Nations[i], Nations[j], (matrix[i][j]-matrix[j][i])))
-                    AdjMat[i][j] = matrix[i][j]-matrix[j][i]
-                    AdjMat[j][i] = -AdjMat[i][j]
+'''
+This function creates the links of the graph.
+'''
+def NetwokEdges():
+    edges = []
+    for i in range(len(G)):
+        for j in range(len(G)):
+            if i < j:
+                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
+                    if Matrix[i][j]-Matrix[j][i] >= 0:
+                        edges.append(
+                            (Nations[i], Nations[j], (Matrix[i][j]-Matrix[j][i])))
+                    else:
+                        edges.append(
+                            (Nations[j], Nations[i], (Matrix[j][i]-Matrix[i][j])))
                 else:
-                    Edges.append(
-                        (Nations[j], Nations[i], (matrix[j][i]-matrix[i][j])))
-                    AdjMat[j][i] = matrix[j][i]-matrix[i][j]
-                    AdjMat[i][j] = -AdjMat[j][i]
+                    pass
             else:
                 pass
-        else:
-            pass
+    
+    return edges
 
-
+Edges=NetwokEdges()
 G.add_weighted_edges_from(Edges)
-degree_dict = dict(G.degree(G.nodes()))
-
 
 # bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
 # print(bc) #non so se è utile
@@ -129,8 +136,36 @@ degree_dict = dict(G.degree(G.nodes()))
 # closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
 # print(closeness_centrality) #non so se è utile
 
-hits = nx.hits(G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
-print(hits)
+'''
+The next function use a built-in function of networkx called hits().
+States with high value of hub have a great capacity to export electricity to other countries,
+states with high value oh authority have a high dependance on the electricity imported
+from other countries. 
+'''
+def hits():
+    hubs, authorities = nx.hits(
+        G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
+    hubs = sorted(hubs.items(), key=lambda x: x[1], reverse=True)
+    authorities = sorted(authorities.items(), key=lambda x: x[1], reverse=True)
+
+    hubs = [(node, round(value, 3)) for node, value in hubs]
+    authorities = [(node, round(value, 3)) for node, value in authorities]
+
+    return hubs, authorities
+
+
+Hubs, Authorities = hits()
+
+'''Print to terminal the results oh function hits'''
+def Printhits():
+    print("Hubs:")
+    for node, value in Hubs:
+        print(f"{node}: {value}")
+
+    print("Authorities:")
+    for node, value in Authorities:
+        print(f"{node}: {value}")
+
 
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
@@ -139,10 +174,4 @@ nx.draw(G, pos=pos, node_size=[
 
 
 plt.show()
-
-# degree fatto
-# matrice al quadrato
-# centralità di flusso, ho foto su cell
-# centralità di intermediazione di flusso
-# resistenza di flusso
-# pagerank?
+Printhits()
