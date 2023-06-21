@@ -33,7 +33,7 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalProduction = list(map(float, TotalProduction))
 
 a = sum(TotalProduction)
-print(a)
+print("Total production is:", a)
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
@@ -50,7 +50,7 @@ for i in range(len(Nations)):
     lista.append(t)
 
 pes = sum(lista)/a
-print(pes)
+print("Mean carbon density is:", pes)
 
 G = nx.DiGraph()  # inizialization of the graph
 
@@ -160,5 +160,5 @@ edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
-plt.show()
 Printhits()
+plt.show()

@@ -33,7 +33,7 @@ with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalProduction2020 = list(map(float, TotalProduction2020))
 
 a = sum(TotalProduction2020)
-print(a)
+print("Total production is:", a)
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("share-by-source2020+Carbon_Density.txt", "r") as file:
@@ -50,7 +50,7 @@ for i in range(len(Nations)):
     lista.append(t)
 
 pes = sum(lista)/a
-print(pes)
+print("Mean carbon density is:", pes)
 
 G = nx.DiGraph()  # inizialization of the graph
 
@@ -130,11 +130,6 @@ def NetwokEdges():
 Edges=NetwokEdges()
 G.add_weighted_edges_from(Edges)
 
-# bc = nx.betweenness_centrality(G, normalized=True, endpoints=True, weight='weight')
-# print(bc) #non so se è utile
-
-# closeness_centrality = nx.closeness_centrality(G, distance='weight', wf_improved=True)
-# print(closeness_centrality) #non so se è utile
 
 '''
 The next function use a built-in function of networkx called hits().
@@ -172,6 +167,5 @@ edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
-
-plt.show()
 Printhits()
+plt.show()

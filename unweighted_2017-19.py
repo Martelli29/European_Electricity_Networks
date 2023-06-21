@@ -32,8 +32,7 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
         TotalProduction.append(last_column)
     TotalProduction = list(map(float, TotalProduction))
 
-a = sum(TotalProduction)
-print(a)
+
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
@@ -49,8 +48,7 @@ for i in range(len(Nations)):
     t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
-pes = sum(lista)/a
-print(pes)
+
 
 G = nx.Graph()  # inizialization of the graph
 
@@ -130,21 +128,31 @@ edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 def centralities():
     currentflow = nx.current_flow_betweenness_centrality(G, weight='weight')
     currentflow = sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
-    print(currentflow)
-    edgecurrentflow = nx.edge_current_flow_betweenness_centrality(
-        G, weight='weight')
-    edgecurrentflow = sorted(edgecurrentflow.items(),
-                             key=lambda x: x[1], reverse=True)
-    print(edgecurrentflow)
-    currentflowcloseness = nx.current_flow_closeness_centrality(
-        G, weight='weight')
-    currentflowcloseness = sorted(
-        currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
-    print(currentflowcloseness)
+    print("Current flow betweenness centrality:")
+    for node, centrality in currentflow:
+        centrality = round(centrality, 3)
+        print(f"{node}: {centrality}")
+    
+    edgecurrentflow = nx.edge_current_flow_betweenness_centrality(G, weight='weight')
+    edgecurrentflow = sorted(edgecurrentflow.items(), key=lambda x: x[1], reverse=True)
+    print("Edge current flow betweenness centrality:")
+    for edge, centrality in edgecurrentflow:
+        centrality = round(centrality, 3)
+        print(f"{edge}: {centrality}")
+    
+    currentflowcloseness = nx.current_flow_closeness_centrality(G, weight='weight')
+    currentflowcloseness = sorted(currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
+    print("Current flow closeness centrality:")
+    for node, centrality in currentflowcloseness:
+        centrality = round(centrality, 3)
+        print(f"{node}: {centrality}")
+    
     laplacian = nx.laplacian_centrality(G, weight='weight')
     laplacian = sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
-    print(laplacian)
-
+    print("Laplacian centrality:")
+    for node, centrality in laplacian:
+        centrality = round(centrality, 3)
+        print(f"{node}: {centrality}")
 
 centralities()
 
