@@ -1,2 +1,3 @@
 # European_Electricity_Networks
-WORK IN PROGRESS
+Project for the Complex Networks exam.
+Open Report.pdf for more information.
