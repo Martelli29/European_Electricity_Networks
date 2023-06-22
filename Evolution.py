@@ -32,8 +32,7 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalProduction = list(map(float, TotalProduction))
 
 
-a = sum(TotalProduction)
-print(a)
+
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
@@ -49,8 +48,7 @@ for i in range(len(Nations)):
     t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
-pes = sum(lista)/a
-print(pes)
+
 
 
 G = nx.DiGraph()  # inizialization oh the graph
@@ -244,7 +242,7 @@ for i in range(len(Nations)):
 There is the creation of two list, first one is a prevision of the total consumption
 for each state that in 2050 that has been hypothesized to be 40% greater.
 Second list is a calculation of a gap that each state have to be closed from the actual
-energy prouction without the coal and the future electricity consumption.
+energy prouction without the coal, gas, oil and the future electricity consumption.
 '''
 NewCons = []
 Gap = []
@@ -268,7 +266,6 @@ def NewPowerFunction():
     newpower = []
     for i in range(len(Nations)):
         newpower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
-        print(Nations[i], PIL[i]/sum(PIL), cc[i]/sum(cc))
     return newpower
 
 
@@ -279,8 +276,6 @@ Balance = []
 for i in range(len(Nations)):
     Balance.append(NewPower[i]-Gap[i])
     Balance[i] = Balance[i]/(8760*10**-9)
-    print(Nations[i], Balance[i])
-print(sum(Balance))
 
 '''
 Function that allow to reorganize the new imp-exp balance in sucha a way that each state
@@ -309,7 +304,7 @@ def calculator():
             pass
 
 
-'''iterator of the previous function, this function run until the previous condition is satsfied.'''
+'''iterator of the previous function, this function run until the previous condition is satisfied.'''
 
 
 def iterator2():
@@ -321,12 +316,10 @@ def iterator2():
 
 while iterator2():
     calculator()
-    assert (sum(Balance) < 1*10**3 and sum(Balance) > -1*10**3)
+    assert (sum(Balance) < 1*10**2 and sum(Balance) > -1*10**2)
 
 
-for i in range(len(Nations)):
-    print(Nations[i], Balance[i], Balance[i]*(8760*10**-9), NewCons[i])
-print(sum(Balance))
+
 
 
 '''Function that calculate values that will be assigned to new links of the network'''
@@ -340,28 +333,28 @@ for i in range(len(Nations)):
 def magia():
     for i in range(len(G)):
         if NewImpExp[i] > 0.0:
-            NewImpExp[i] = NewImpExp[i]-1*10**3
+            NewImpExp[i] = NewImpExp[i]-1*10**2
             non_zero_count = 0
 
             for count in range(len(G)):
                 # state that need electricity
-                if Matrix[i][count] != 0 and NewImpExp[count] < 1*10**3:
+                if Matrix[i][count] != 0 and NewImpExp[count] < 1*10**2:
                     non_zero_count = non_zero_count+1
                 else:
                     pass
 
             if non_zero_count != 0:
                 for j in range(len(G)):
-                    if Matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**3:
-                        NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
+                    if Matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**2:
+                        NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
                         NewMatrix[i][j] = NewMatrix[i][j] + \
-                            (1*10**3/non_zero_count)
+                            (1*10**2/non_zero_count)
                         NewMatrix[j][i] = NewMatrix[j][i] - \
-                            (1*10**3/non_zero_count)
+                            (1*10**2/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
+                assert (sum(NewImpExp) < 1*10**2 and sum(NewImpExp) > -1*10**2)
 
             elif non_zero_count == 0:
                 for count in range(len(G)):
@@ -372,15 +365,15 @@ def magia():
 
                 for j in range(len(G)):
                     if Matrix[i][j] != 0.0:
-                        NewImpExp[j] = NewImpExp[j]+(1*10**3/non_zero_count)
+                        NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
                         NewMatrix[i][j] = NewMatrix[i][j] + \
-                            (1*10**3/non_zero_count)
+                            (1*10**2/non_zero_count)
                         NewMatrix[j][i] = NewMatrix[j][i] - \
-                            (1*10**3/non_zero_count)
+                            (1*10**2/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**3 and sum(NewImpExp) > -1*10**3)
+                assert (sum(NewImpExp) < 1*10**2 and sum(NewImpExp) > -1*10**2)
         else:
             pass
 
@@ -390,7 +383,7 @@ def magia():
 
 def iterator(list):
     for i in list:
-        if i >= 1*10**3:
+        if i >= 1*10**2:
             return True
     return False
 
@@ -415,17 +408,22 @@ for i in range(len(Nations)):
         else:
             pass
 
+print("New consumption (TWh):")
 for i in range(len(Nations)):
-    print(Nations[i], NewImpExp[i])
+    print(Nations[i],":", NewCons[i])
+
+
+print("New electricity links (W):")
+for i in range(len(Nations)):
     for j in range(len(Nations)):
         if NewMatrix[i][j] != 0:
-            print(Nations[i], Nations[j], NewMatrix[i][j])
+            print(Nations[i],"->", Nations[j],":", NewMatrix[i][j])
 
 
 NewSupply = []
 for i in range(len(Nations)):
     NewSupply.append(Gap[i]+Balance[i]*(8760*10**-9))
-    print(Nations[i], Gap[i], Balance[i], NewSupply[i])
+    #print(Nations[i], Gap[i], Balance[i], NewSupply[i])
 
 
 '''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
@@ -457,8 +455,7 @@ def NewCleanEnergy():
         while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
             provv = provv+0.1  # break condition
             addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
-        print(Nations[i], addsolarwind[i], addnuclear[i])
-
+        
     return addsolarwind, addnuclear
 
 
