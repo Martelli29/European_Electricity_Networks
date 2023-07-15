@@ -33,6 +33,7 @@ with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalProduction2020 = list(map(float, TotalProduction2020))
 
 a = sum(TotalProduction2020)
+a = round(a, 2)
 print("Total production is:", a)
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
@@ -50,6 +51,7 @@ for i in range(len(Nations)):
     lista.append(t)
 
 pes = sum(lista)/a
+pes = round(pes, 2)
 print("Mean carbon density is:", pes)
 
 G = nx.DiGraph()  # inizialization of the graph
@@ -86,7 +88,6 @@ of the import-export of the electricity through the states.
 '''
 
 
-
 def FillMatrix():
     matrix = np.zeros((len(G.nodes), len(G.nodes)))
     df = pd.read_csv("Imp-Exp_2020.txt")
@@ -97,17 +98,18 @@ def FillMatrix():
                     df['target'] == Nations[j]), 'value'].iloc[0]
             else:
                 pass
-    
+
     return matrix
 
 
-Matrix=FillMatrix()
-
+Matrix = FillMatrix()
 
 
 '''
 This function creates the links of the graph.
 '''
+
+
 def NetwokEdges():
     edges = []
     for i in range(len(G)):
@@ -124,11 +126,28 @@ def NetwokEdges():
                     pass
             else:
                 pass
-    
+
     return edges
 
-Edges=NetwokEdges()
+
+Edges = NetwokEdges()
 G.add_weighted_edges_from(Edges)
+
+
+def LogDensity(graph):
+    density = nx.density(graph)
+    density = round(density, 4)
+    print("Density of the graph:", density)
+
+
+def Communities():
+    partition = nx.community.greedy_modularity_communities(G, weight='weight')
+
+    # Stampa l'assegnazione delle comunità per ogni nodo
+    print("Communitites:")
+    for community_id, community in enumerate(partition):
+        for node in community:
+            print(f"Nodo {node}: Comunità {community_id}")
 
 
 '''
@@ -137,6 +156,8 @@ States with high value of hub have a great capacity to export electricity to oth
 states with high value oh authority have a high dependance on the electricity imported
 from other countries. 
 '''
+
+
 def hits():
     hubs, authorities = nx.hits(
         G, max_iter=100, tol=1e-15, nstart=None, normalized=True)
@@ -152,6 +173,8 @@ def hits():
 Hubs, Authorities = hits()
 
 '''Print to terminal the results oh function hits'''
+
+
 def Printhits():
     print("Hubs:")
     for node, value in Hubs:
@@ -167,5 +190,7 @@ edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 nx.draw(G, pos=pos, node_size=[
         x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
 
+LogDensity(G)
+Communities()
 Printhits()
 plt.show()

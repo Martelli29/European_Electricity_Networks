@@ -33,7 +33,6 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalProduction = list(map(float, TotalProduction))
 
 
-
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
@@ -47,7 +46,6 @@ lista = []
 for i in range(len(Nations)):
     t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
-
 
 
 G = nx.Graph()  # inizialization of the graph
@@ -84,7 +82,6 @@ of the import-export of the electricity through the states.
 '''
 
 
-
 def FillMatrix():
     matrix = np.zeros((len(G.nodes), len(G.nodes)))
     df = pd.read_csv("Imp-Exp_2017-19.txt")
@@ -98,12 +95,16 @@ def FillMatrix():
 
     return matrix
 
-Matrix=FillMatrix()
+
+Matrix = FillMatrix()
 
 '''
 This function creates the links of the graph.
 '''
+
+
 def NetworkEdges():
+    total = 0
     edges = []
     for i in range(len(G)):
         for j in range(len(G)):
@@ -111,20 +112,46 @@ def NetworkEdges():
                 if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
                     edges.append(
                         (Nations[i], Nations[j], (Matrix[i][j]+Matrix[j][i])))
+                    total = total+Matrix[i][j]+Matrix[j][i]
                 else:
                     pass
             else:
                 pass
-    
-    return edges
 
-Edges=NetworkEdges()
+    return edges, total
+
+
+Edges, Total = NetworkEdges()
 G.add_weighted_edges_from(Edges)
+Total = round(Total, 1)
+
+print("Total flux of the graph:", Total)
+
+
+def LogDensity(graph):
+    density = nx.density(graph)
+    density = round(density, 4)
+    print("Density of the graph:", density)
+
+
+LogDensity(G)
+
+
+def Communities():
+    partition = nx.community.greedy_modularity_communities(G, weight='weight')
+
+    # Stampa l'assegnazione delle comunità per ogni nodo
+    print("Communitites:")
+    for community_id, community in enumerate(partition):
+        for node in community:
+            print(f"Nodo {node}: Comunità {community_id}")
 
 
 edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
 
-''''''
+Communities()
+
+
 def centralities():
     currentflow = nx.current_flow_betweenness_centrality(G, weight='weight')
     currentflow = sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
@@ -132,27 +159,32 @@ def centralities():
     for node, centrality in currentflow:
         centrality = round(centrality, 3)
         print(f"{node}: {centrality}")
-    
-    edgecurrentflow = nx.edge_current_flow_betweenness_centrality(G, weight='weight')
-    edgecurrentflow = sorted(edgecurrentflow.items(), key=lambda x: x[1], reverse=True)
+
+    edgecurrentflow = nx.edge_current_flow_betweenness_centrality(
+        G, weight='weight')
+    edgecurrentflow = sorted(edgecurrentflow.items(),
+                             key=lambda x: x[1], reverse=True)
     print("Edge current flow betweenness centrality:")
     for edge, centrality in edgecurrentflow:
         centrality = round(centrality, 3)
         print(f"{edge}: {centrality}")
-    
-    currentflowcloseness = nx.current_flow_closeness_centrality(G, weight='weight')
-    currentflowcloseness = sorted(currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
+
+    currentflowcloseness = nx.current_flow_closeness_centrality(
+        G, weight='weight')
+    currentflowcloseness = sorted(
+        currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
     print("Current flow closeness centrality:")
     for node, centrality in currentflowcloseness:
         centrality = round(centrality, 3)
         print(f"{node}: {centrality}")
-    
+
     laplacian = nx.laplacian_centrality(G, weight='weight')
     laplacian = sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
     print("Laplacian centrality:")
     for node, centrality in laplacian:
         centrality = round(centrality, 3)
         print(f"{node}: {centrality}")
+
 
 centralities()
 

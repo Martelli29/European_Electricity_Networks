@@ -32,8 +32,6 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalProduction = list(map(float, TotalProduction))
 
 
-
-
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
 with open("sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
@@ -47,8 +45,6 @@ lista = []
 for i in range(len(Nations)):
     t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
-
-
 
 
 G = nx.DiGraph()  # inizialization oh the graph
@@ -159,6 +155,7 @@ ColorMap = NodeColor(RealCarbonDensity)
 This function creates the links of the graph.
 '''
 
+
 def NetworkEdges():
     edges = []
     for i in range(len(G)):
@@ -180,6 +177,12 @@ def NetworkEdges():
 
 Edges = NetworkEdges()  # Used for the assignement of the links to the network
 G.add_weighted_edges_from(Edges)
+
+
+def LogDensity(graph):
+    density = nx.density(graph)
+    density = round(density, 4)
+    print("Density of the new graph:", density)
 
 
 '''
@@ -319,9 +322,6 @@ while iterator2():
     assert (sum(Balance) < 1*10**2 and sum(Balance) > -1*10**2)
 
 
-
-
-
 '''Function that calculate values that will be assigned to new links of the network'''
 NewMatrix = np.zeros((len(Nations), len(Nations)))
 
@@ -410,20 +410,20 @@ for i in range(len(Nations)):
 
 print("New consumption (TWh):")
 for i in range(len(Nations)):
-    print(Nations[i],":", NewCons[i])
+    print(Nations[i], ":", NewCons[i])
 
 
 print("New electricity links (W):")
 for i in range(len(Nations)):
     for j in range(len(Nations)):
         if NewMatrix[i][j] != 0:
-            print(Nations[i],"->", Nations[j],":", NewMatrix[i][j])
+            print(Nations[i], "->", Nations[j], ":", NewMatrix[i][j])
 
 
 NewSupply = []
 for i in range(len(Nations)):
     NewSupply.append(Gap[i]+Balance[i]*(8760*10**-9))
-    #print(Nations[i], Gap[i], Balance[i], NewSupply[i])
+    # print(Nations[i], Gap[i], Balance[i], NewSupply[i])
 
 
 '''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
@@ -455,7 +455,7 @@ def NewCleanEnergy():
         while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
             provv = provv+0.1  # break condition
             addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
-        
+
     return addsolarwind, addnuclear
 
 
@@ -525,5 +525,21 @@ ColorMap = NodeColor(CarbonDensity2050)
 
 nx.draw(uG, pos=pos, node_size=[
     x * 8 for x in NewCons], node_color=ColorMap, with_labels=True, font_size=8, width=Newedge_weights)
+
+
+def Communities():
+    partition = nx.community.greedy_modularity_communities(G, weight='weight')
+
+    # Stampa l'assegnazione delle comunità per ogni nodo
+    print("Communitites:")
+    for community_id, community in enumerate(partition):
+        for node in community:
+            print(f"Nodo {node}: Comunità {community_id}")
+
+
+Communities()
+
+
+LogDensity(uG)
 
 plt.show()
