@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-TotalProduction2020 = []
-CarbonDensity2020 = []
+TotalProduction = []
+CarbonDensity = []
 
 
 '''This function get the names of the nodes of the network'''
@@ -29,10 +29,10 @@ with open('DataSet/Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     next(TotalEnergy)
     for row in TotalEnergy:
         last_column = row[-1]  # seleziona l'ultima colonna
-        TotalProduction2020.append(last_column)
-    TotalProduction2020 = list(map(float, TotalProduction2020))
+        TotalProduction.append(last_column)
+    TotalProduction = list(map(float, TotalProduction))
 
-a = sum(TotalProduction2020)
+a = sum(TotalProduction)
 a = round(a, 2)
 print("Total production is:", a)
 
@@ -42,12 +42,12 @@ with open("DataSet/share-by-source2020+Carbon_Density.txt", "r") as file:
     next(file)  # skip first row
     for row in contribute:
         last_column = row[-1]  # seleziona l'ultima colonna
-        CarbonDensity2020.append(last_column)
-    CarbonDensity2020 = list(map(float, CarbonDensity2020))
+        CarbonDensity.append(last_column)
+    CarbonDensity = list(map(float, CarbonDensity))
 
 lista = []
 for i in range(len(Nations)):
-    t = CarbonDensity2020[i]*TotalProduction2020[i]
+    t = CarbonDensity[i]*TotalProduction[i]
     lista.append(t)
 
 pes = sum(lista)/a
@@ -62,31 +62,12 @@ def NodeConstruction():  # construction of the node with the name of the states
         G.add_node(str(Nations[i]))
 
 
-pos = {'ALB': (1.1, -3.1), 'AUT': (0.3, -1.3), 'BIH': (0.7, -2.5), 'BEL': (-0.9, 0.4), 'BGR': (2.5, -2.5), 'BLR': (2.2, 1), 'CHE': (-0.3, -1.3), 'CZE': (0.5, -0.5), 'DEU': (0, 0), 'DNK': (0, 2), 'EST': (2, 2.5), 'ESP': (-1.5, -2), 'FIN': (2, 3.5), 'FRA': (-1, -1), 'GBR': (-2, 2.5), 'GRC': (1.3, -3.8), 'HRV': (0.8, -1.9), 'HUN': (1.5, -1), 'IRL': (-2.5, 2.5),
-       'ITA': (0, -3), 'LTU': (2, 1.5), 'LUX': (-0.5, 0), 'LVA': (2, 2), 'MDA': (3, -1), 'MNE': (0.9, -2.8), 'MKD': (1.5, -3), 'MLT': (0, -3.8), 'NLD': (-0.5, 1), 'NOR': (0, 3.5), 'POL': (1.3, 0.2), 'PRT': (-2.5, -2), 'ROU': (2.5, -1), 'SRB': (1.5, -2.2), 'RUS': (3.7, 2.5), 'SWE': (1, 2.5), 'SVN': (0.6, -1.5), 'SVK': (1, -0.5), 'TUR': (3.5, -3.5), 'UKR': (3, 0.5)}
-
 NodeConstruction()
-
-ColorMap = []
-for i in range(len(G)):
-    if CarbonDensity2020[i] < 100.0:
-        ColorMap.append("green")
-    elif CarbonDensity2020[i] >= 100 and CarbonDensity2020[i] < 200:
-        ColorMap.append("lightgreen")
-    elif CarbonDensity2020[i] >= 200 and CarbonDensity2020[i] < 300:
-        ColorMap.append("yellow")
-    elif CarbonDensity2020[i] >= 300 and CarbonDensity2020[i] < 400:
-        ColorMap.append("orange")
-    elif CarbonDensity2020[i] >= 400 and CarbonDensity2020[i] < 500:
-        ColorMap.append("red")
-    elif CarbonDensity2020[i] >= 500:
-        ColorMap.append("brown")
 
 '''
 here there is the function that fill the Matrix with the data
 of the import-export of the electricity through the states.
 '''
-
 
 def FillMatrix():
     matrix = np.zeros((len(G.nodes), len(G.nodes)))
@@ -172,7 +153,7 @@ def hits():
 
 Hubs, Authorities = hits()
 
-'''Print to terminal the results oh function hits'''
+'''Print to terminal the results of function hits'''
 
 
 def Printhits():
@@ -185,12 +166,6 @@ def Printhits():
         print(f"{node}: {value}")
 
 
-edge_weights = [G[u][v]['weight']/400000 for u, v in G.edges()]
-
-nx.draw(G, pos=pos, node_size=[
-        x * 8 for x in TotalProduction2020], node_color=ColorMap, with_labels=True, font_size=8, width=edge_weights)
-
 LogDensity(G)
 Communities()
 Printhits()
-plt.show()
