@@ -10,7 +10,7 @@ import numpy as np
 
 def GetName():
     nations = []
-    with open("Nations.txt", "r") as file:
+    with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
         row = next(file)  # second row
         nations = row.strip().split(",")  # get name of the nations from the file
@@ -23,7 +23,7 @@ TotalProduction = []
 CarbonDensity = []
 
 '''in this file we get the values of electricity production for each state'''
-with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
+with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)   # skip first row
     for row in TotalEnergy:
@@ -33,7 +33,7 @@ with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
 
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
-with open("sharebysourceCarbonDensity.txt", "r") as file:
+with open("DataSet/sharebysourceCarbonDensity.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
     for row in contribute:
@@ -69,7 +69,7 @@ of the import-export of the electricity through the states.
 
 def FillMatrix():
     matrix = np.zeros((len(G.nodes), len(G.nodes)))
-    df = pd.read_csv("Imp-Exp_2017-19.txt")
+    df = pd.read_csv("DataSet/Imp-Exp_2017-19.txt")
     for i in range(len(G.nodes)):
         for j in range(len(G.nodes)):
             if not df.loc[(df['source'] == Nations[i]) & (df['target'] == Nations[j])].empty:
@@ -223,7 +223,7 @@ cc = [cc[nation] for nation in Nations]
 
 def CoalDeficitCalculator():
     coaldeficit = []
-    with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
+    with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
         TotalEnergy = csv.reader(file)
         next(TotalEnergy)   # skip first row
         for row in TotalEnergy:
@@ -255,7 +255,7 @@ for i in range(len(Nations)):
 
 '''Actual PIL of the states that will be used as a criterion for the allocation of the new electricity supply.'''
 PIL = []
-with open("Nations.txt", "r") as file:
+with open("DataSet/Nations.txt", "r") as file:
     next(file)  # skip first row
     next(file)  # skip second row
     row = next(file)  # third row
@@ -434,7 +434,7 @@ def NewCleanEnergy():
     addsolarwind = []
     SolarWind = []
 
-    df = pd.read_csv("Electricity_Production_TWh_FINAL.txt")
+    df = pd.read_csv("DataSet/Electricity_Production_TWh_FINAL.txt")
     for i in range(len(Nations)):
         SolarWind.append(float(df.iloc[i, 5])+float(df.iloc[i, 7]))
 
@@ -486,7 +486,7 @@ def GetCarbonDensity2050():
     IncrNum = []
     IncrDen = []
     carbonDensity2050 = []
-    with open('Electricity_Production_TWh_FINAL.txt', 'r') as file:
+    with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
         f = csv.reader(file)
         next(f)   # skip first row
         for row in f:

@@ -14,7 +14,7 @@ CarbonDensity2020 = []
 
 def GetName():
     nations = []
-    with open("Nations.txt", "r") as file:
+    with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
         row = next(file)  # second row
         nations = row.strip().split(",")  # get name of the nations from the file
@@ -24,7 +24,7 @@ def GetName():
 Nations = GetName()
 
 '''in this file we get the values of electricity production for each state'''
-with open('Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
+with open('DataSet/Electricity_Production_TWh2020_FINAL.txt', 'r') as file:
     TotalEnergy = csv.reader(file)
     next(TotalEnergy)
     for row in TotalEnergy:
@@ -37,7 +37,7 @@ a = round(a, 2)
 print("Total production is:", a)
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
-with open("share-by-source2020+Carbon_Density.txt", "r") as file:
+with open("DataSet/share-by-source2020+Carbon_Density.txt", "r") as file:
     contribute = csv.reader(file)
     next(file)  # skip first row
     for row in contribute:
@@ -90,7 +90,7 @@ of the import-export of the electricity through the states.
 
 def FillMatrix():
     matrix = np.zeros((len(G.nodes), len(G.nodes)))
-    df = pd.read_csv("Imp-Exp_2020.txt")
+    df = pd.read_csv("DataSet/Imp-Exp_2020.txt")
     for i in range(len(G.nodes)):
         for j in range(len(G.nodes)):
             if not df.loc[(df['source'] == Nations[i]) & (df['target'] == Nations[j])].empty:
