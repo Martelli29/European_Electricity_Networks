@@ -17,9 +17,9 @@ class DGraph:
     def __len__(self):
         return len(self.graph)
     
-    def edges(self):
-        return self.graph.edges()
-    
+    def get_weights(self):
+        return [self.graph[u][v]['weight']/400000 for u,v in self.graph.edges()]
+
     def LinksCreation(self, WeightList):
         self.graph.add_weighted_edges_from(WeightList)
 
@@ -110,4 +110,3 @@ class UGraph:
         for node, centrality in laplacian:
             centrality = round(centrality, 3)
             print(f"{node}: {centrality}")
-

@@ -24,10 +24,10 @@ def ColorMap(graph, carbondensity):
     return colormap
 
 
-def plot(graph, production, colormap):
-    edge_weights = [graph[u][v]['weight']/400000 for u, v in graph.edges()]
+def plot(graph_class, production, colormap):
+    edge_weights = graph_class.get_weights()
 
-    nx.draw(graph, pos=pos, node_size=[
+    nx.draw(graph_class.graph, pos=pos, node_size=[
             x * 8 for x in production], node_color=colormap, with_labels=True, font_size=8, width=edge_weights)
 
     plt.show()
