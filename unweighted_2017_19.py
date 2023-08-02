@@ -1,9 +1,8 @@
 import networkx as nx
 import pandas as pd
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
-
+import draw as dr
 
 TotalProduction = []
 CarbonDensity = []
@@ -166,3 +165,5 @@ def centralities():
 
 
 centralities()
+
+dr.plot(G, TotalProduction, dr.ColorMap(G, CarbonDensity))

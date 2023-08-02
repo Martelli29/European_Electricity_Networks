@@ -1,9 +1,9 @@
 import networkx as nx
 import pandas as pd
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
 import graph as gp
+import draw as dr
 
 TotalProduction = []
 CarbonDensity = []
@@ -111,7 +111,7 @@ G.LinkDensity()
 G.Communities()
 G.hits()
 
-
+dr.plot(G, TotalProduction, dr.ColorMap(G, CarbonDensity))
 
 '''
 The next function use a built-in function of networkx called hits().

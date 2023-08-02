@@ -1,9 +1,8 @@
 import networkx as nx
 import pandas as pd
 import csv
-import matplotlib.pyplot as plt
 import numpy as np
-
+import draw as dr
 
 '''This function get the names of the nodes of the network'''
 
@@ -497,3 +496,6 @@ Communities()
 
 
 LogDensity(uG)
+
+dr.plot(G, TotalConsumption, dr.ColorMap(G, RealCarbonDensity))
+dr.plot(uG, NewCons, dr.ColorMap(uG, CarbonDensity2050))
