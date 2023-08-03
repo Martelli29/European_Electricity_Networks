@@ -8,7 +8,7 @@ import graph as gp
 '''This function get the names of the nodes of the network'''
 
 
-def GetName():
+def GetNodes():
     nations = []
     with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
@@ -17,34 +17,36 @@ def GetName():
     return nations
 
 
-Nations = GetName()
-
-TotalProduction = []
-CarbonDensity = []
 
 '''in this file we get the values of electricity production for each state'''
-with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
-    TotalEnergy = csv.reader(file)
-    next(TotalEnergy)   # skip first row
-    for row in TotalEnergy:
-        last_column = row[-1]  # select last column
-        TotalProduction.append(last_column)
-    TotalProduction = list(map(float, TotalProduction))
+
+
+def GetTotalProduction():
+    totalproduction = []
+    with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
+        TotalEnergy = csv.reader(file)
+        next(TotalEnergy)   # skip first row
+        for row in TotalEnergy:
+            last_column = row[-1]  # select last column
+            totalproduction.append(last_column)
+        totalproduction = list(map(float, totalproduction))
+    return totalproduction
 
 
 '''in this file we get the values of the carbon intensity of the electricity generation for each state'''
-with open("DataSet/sharebysourceCarbonDensity.txt", "r") as file:
-    contribute = csv.reader(file)
-    next(file)  # skip first row
-    for row in contribute:
-        last_column = row[-1]  # select last column
-        CarbonDensity.append(last_column)
-    CarbonDensity = list(map(float, CarbonDensity))
 
-lista = []
-for i in range(len(Nations)):
-    t = CarbonDensity[i]*TotalProduction[i]
-    lista.append(t)
+
+def GetCarbonDensity():
+    carbondensity = []
+    with open("DataSet/sharebysourceCarbonDensity.txt", "r") as file:
+        contribute = csv.reader(file)
+        next(file)  # skip first row
+        for row in contribute:
+            last_column = row[-1]  # select last column
+            carbondensity.append(last_column)
+        carbondensity = list(map(float, carbondensity))
+    return carbondensity
+
 
 
 '''
@@ -53,7 +55,7 @@ of the import-export of the electricity through the states.
 '''
 
 
-def FillMatrix():
+def FillMatrix(Nations):
     matrix = np.zeros((len(Nations), len(Nations)))
     df = pd.read_csv("DataSet/Imp-Exp_2017-19.txt")
     for i in range(len(Nations)):
@@ -67,7 +69,6 @@ def FillMatrix():
     return matrix
 
 
-Matrix = FillMatrix()
 
 '''
 This function is used for calculate the total consumption and carbon density for each state
@@ -75,7 +76,7 @@ considering the contributes of the electricity import-export
 '''
 
 
-def RCD():
+def RCD(Nations, AdjMatrix, carbondensity, totalproduction):
     totalconsumption = []
     realcarbondensity = []
 
@@ -89,10 +90,10 @@ def RCD():
         cons = 0
 
         for j in range(len(Nations)):
-            if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-                num = num+Matrix[j][i]*(8760*10**-9)*CarbonDensity[j]
-                den = den+Matrix[j][i]*(8760*10**-9)
-                cons = cons-Matrix[i][j] + Matrix[j][i]
+            if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
+                num = num+AdjMatrix[j][i]*(8760*10**-9)*carbondensity[j]
+                den = den+AdjMatrix[j][i]*(8760*10**-9)
+                cons = cons-AdjMatrix[i][j] + AdjMatrix[j][i]
             else:
                 pass
         else:
@@ -103,13 +104,11 @@ def RCD():
         Den.append(den)
 
         realcarbondensity.append(
-            (TotalProduction[i]*CarbonDensity[i]+Num[i])/(Den[i]+TotalProduction[i]))
-        totalconsumption.append(TotalProduction[i]+(Cons[i]*(8760*10**-9)))
+            (totalproduction[i]*carbondensity[i]+Num[i])/(Den[i]+totalproduction[i]))
+        totalconsumption.append(totalproduction[i]+(Cons[i]*(8760*10**-9)))
 
     return totalconsumption, realcarbondensity
 
-
-TotalConsumption, RealCarbonDensity = RCD()
 
 
 '''
@@ -117,18 +116,18 @@ This function creates the links of the graph.
 '''
 
 
-def NetworkEdges():
+def NetworkEdges(Nations, AdjMatrix):
     edges = []
-    for i in range(len(G)):
-        for j in range(len(G)):
+    for i in range(len(Nations)):
+        for j in range(len(Nations)):
             if i < j:
-                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-                    if Matrix[i][j]-Matrix[j][i] >= 0:
+                if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
+                    if AdjMatrix[i][j]-AdjMatrix[j][i] >= 0:
                         edges.append(
-                            (Nations[i], Nations[j], (Matrix[i][j]-Matrix[j][i])))
+                            (Nations[i], Nations[j], (AdjMatrix[i][j]-AdjMatrix[j][i])))
                     else:
                         edges.append(
-                            (Nations[j], Nations[i], (Matrix[j][i]-Matrix[i][j])))
+                            (Nations[j], Nations[i], (AdjMatrix[j][i]-AdjMatrix[i][j])))
                 else:
                     pass
             else:
@@ -140,18 +139,21 @@ def NetworkEdges():
 Undirected unweighted graph created for the calculation of a closeness centrality
 used on the following code
 '''
-ccG = nx.Graph()
-ccMatrix = np.zeros((len(Nations), len(Nations)))
+def ccGraph(Nations, AdjMatrix):
+    ccG = nx.Graph()
+    ccMatrix = np.zeros((len(Nations), len(Nations)))
 
-for i in range(len(Nations)):
-    for j in range(len(Nations)):
-        if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-            ccG.add_edge(Nations[i], Nations[j])
-        else:
-            pass
+    for i in range(len(Nations)):
+        for j in range(len(Nations)):
+            if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
+                ccG.add_edge(Nations[i], Nations[j])
+            else:
+                pass
 
-cc = nx.closeness_centrality(ccG)
-cc = [cc[nation] for nation in Nations]
+    cc = nx.closeness_centrality(ccG)
+    cc = [cc[nation] for nation in Nations]
+
+    return cc
 
 '''Creation of a list that has the coal production for each state that will be removed'''
 
@@ -168,13 +170,14 @@ def CoalDeficitCalculator():
     return coaldeficit
 
 
-CoalDeficit = CoalDeficitCalculator()
+
 
 '''Electricity consumption without the coal'''
-ConsWithoutCoal = []
-for i in range(len(Nations)):
-    ConsWithoutCoal.append(TotalConsumption[i]-CoalDeficit[i])
-
+def ConsWithoutCoal(Nations, totalconsumption, coaldeficit):
+    conswithoutcoal = []
+    for i in range(len(Nations)):
+        conswithoutcoal.append(totalconsumption[i]-coaldeficit[i])
+    return conswithoutcoal
 
 '''
 There is the creation of two list, first one is a prevision of the total consumption
@@ -182,62 +185,70 @@ for each state that in 2050 that has been hypothesized to be 40% greater.
 Second list is a calculation of a gap that each state have to be closed from the actual
 energy prouction without the coal, gas, oil and the future electricity consumption.
 '''
-NewCons = []
-Gap = []
-for i in range(len(Nations)):
-    NewCons.append(TotalConsumption[i]+0.4*TotalConsumption[i])
-    Gap.append(NewCons[i]-ConsWithoutCoal[i])
+
+def NewConsumptionCalculator(Nations, TotalCons):
+    NewCons = []
+    for i in range(len(Nations)):
+        NewCons.append(TotalCons[i]+0.4*TotalCons[i])
+    return NewCons
+
+def ProductionDeficit(Nations, NewCons, ConsWithoutCoal):
+    gap = []
+    for i in range(len(Nations)):
+        gap.append(NewCons[i]-ConsWithoutCoal[i])
+    return gap
 
 '''Actual PIL of the states that will be used as a criterion for the allocation of the new electricity supply.'''
-PIL = []
-with open("DataSet/Nations.txt", "r") as file:
-    next(file)  # skip first row
-    next(file)  # skip second row
-    row = next(file)  # third row
-    PIL = row.strip().split(",")
-    PIL = list(map(float, PIL))
-
+def GetPIL():
+    pil = []
+    with open("DataSet/Nations.txt", "r") as file:
+        next(file)  # skip first row
+        next(file)  # skip second row
+        row = next(file)  # third row
+        pil = row.strip().split(",")
+        pil = list(map(float, pil))
+    return pil
 '''Allocation for each state of the new power'''
 
 
-def NewPowerFunction():
+def NewPowerFunction(Nodes, gap, pil, cc):
     newpower = []
-    for i in range(len(Nations)):
-        newpower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
+    for i in range(len(Nodes)):
+        newpower.append(sum(gap)*(pil[i]/sum(pil)+(cc[i]/sum(cc)))/2)
     return newpower
 
 
-NewPower = NewPowerFunction()
 
 '''Calculation of the balance of the electricity that each state has from the import-export'''
-Balance = []
-for i in range(len(Nations)):
-    Balance.append(NewPower[i]-Gap[i])
-    Balance[i] = Balance[i]/(8760*10**-9)
-
+def Balances(Nodes, newpower, gap):
+    balance = []
+    for i in range(len(Nodes)):
+        balance.append(newpower[i]-gap[i])
+        balance[i] = balance[i]/(8760*10**-9)
+    return balance
 '''
 Function that allow to reorganize the new imp-exp balance in sucha a way that each state
 don't import an amount of electricity greater than 5% of the own total consumption.
 '''
 
 
-def calculator():
-    for i in range(len(Nations)):
+def calculator(nodes, Balance, NewCons, pil, cc):
+    for i in range(len(nodes)):
 
         if Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05):
             balance = 0.005*abs(Balance[i])
             Balance[i] = Balance[i]+0.005*abs(Balance[i])
-            for j in range(len(Nations)):
+            for j in range(len(nodes)):
                 Balance[j] = Balance[j] - \
-                    (balance*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
+                    (balance*(pil[j]/sum(pil)+(cc[j]/sum(cc)))/2)
         else:
             pass
         if Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15):
             balance = 0.015*abs(Balance[i])
             Balance[i] = Balance[i]-0.015*abs(Balance[i])
-            for j in range(len(Nations)):
+            for j in range(len(nodes)):
                 Balance[j] = Balance[j] + \
-                    (balance*(PIL[j]/sum(PIL)+(cc[j]/sum(cc)))/2)
+                    (balance*(pil[j]/sum(pil)+(cc[j]/sum(cc)))/2)
         else:
             pass
 
@@ -245,70 +256,66 @@ def calculator():
 '''iterator of the previous function, this function run until the previous condition is satisfied.'''
 
 
-def iterator2():
-    for i in range(len(Nations)):
+def iterator2(nodes, Balance, NewCons):
+    for i in range(len(nodes)):
         if (Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15)):
             return True
     return False
 
 
-while iterator2():
-    calculator()
-    assert (sum(Balance) < 1*10**2 and sum(Balance) > -1*10**2)
-
 
 '''Function that calculate values that will be assigned to new links of the network'''
-NewMatrix = np.zeros((len(Nations), len(Nations)))
 
-NewImpExp = []
-for i in range(len(Nations)):
-    NewImpExp.append(Balance[i])
+def NewGrid(nodes, Balance):
+    newimpexp = []
+    for i in range(len(nodes)):
+        newimpexp.append(Balance[i])
+    return newimpexp
 
-
-def magia():
-    for i in range(len(Nations)):
-        if NewImpExp[i] > 0.0:
-            NewImpExp[i] = NewImpExp[i]-1*10**2
+def magia(nodes, newimpexp, matrix, matrix2050):
+    for i in range(len(nodes)):
+        if newimpexp[i] > 0.0:
+            newimpexp[i] = newimpexp[i]-1*10**2
             non_zero_count = 0
 
-            for count in range(len(Nations)):
+            for count in range(len(nodes)):
                 # state that need electricity
-                if Matrix[i][count] != 0 and NewImpExp[count] < 1*10**2:
+                if matrix[i][count] != 0 and newimpexp[count] < 1*10**2:
                     non_zero_count = non_zero_count+1
                 else:
                     pass
 
             if non_zero_count != 0:
-                for j in range(len(Nations)):
-                    if Matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**2:
-                        NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
-                        NewMatrix[i][j] = NewMatrix[i][j] + \
+                for j in range(len(nodes)):
+                    if matrix[i][j] != 0.0 and newimpexp[j] < 1*10**2:
+                        newimpexp[j] = newimpexp[j]+(1*10**2/non_zero_count)
+                        matrix2050[i][j] = matrix2050[i][j] + \
                             (1*10**2/non_zero_count)
-                        NewMatrix[j][i] = NewMatrix[j][i] - \
+                        matrix2050[j][i] = matrix2050[j][i] - \
                             (1*10**2/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**2 and sum(NewImpExp) > -1*10**2)
+                assert (sum(newimpexp) < 1*10**2 and sum(newimpexp) > -1*10**2)
 
             elif non_zero_count == 0:
-                for count in range(len(Nations)):
-                    if Matrix[i][count] != 0:
+                for count in range(len(nodes)):
+                    if matrix[i][count] != 0:
                         non_zero_count = non_zero_count+1
                     else:
                         pass
 
-                for j in range(len(Nations)):
-                    if Matrix[i][j] != 0.0:
-                        NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
-                        NewMatrix[i][j] = NewMatrix[i][j] + \
+                for j in range(len(nodes)):
+                    if matrix[i][j] != 0.0:
+                        newimpexp[j] = newimpexp[j]+(1*10**2/non_zero_count)
+                        matrix2050[i][j] = matrix2050[i][j] + \
                             (1*10**2/non_zero_count)
-                        NewMatrix[j][i] = NewMatrix[j][i] - \
+                        matrix2050[j][i] = matrix2050[j][i] - \
                             (1*10**2/non_zero_count)
                     else:
                         pass
 
-                assert (sum(NewImpExp) < 1*10**2 and sum(NewImpExp) > -1*10**2)
+                assert (sum(newimpexp) < 1*10**2 and sum(newimpexp) > -1*10**2)
         else:
             pass
 
@@ -316,66 +323,67 @@ def magia():
 '''iterator of the previous function'''
 
 
-def iterator(list):
-    for i in list:
+def iterator(newimpexp):
+    for i in newimpexp:
         if i >= 1*10**2:
             return True
     return False
 
 
-while iterator(NewImpExp):
-    magia()
 
 '''Function that create the links of the evoluted network using the value calculated from the previous function'''
-def NewEdges():
+
+
+def NewEdges(Nations, Matrix, Matrix2050):
     newedges = []
     for i in range(len(Nations)):
         for j in range(len(Nations)):
             if i < j:
                 if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-                    if NewMatrix[i][j]-NewMatrix[j][i] >= 0:
+                    if Matrix2050[i][j]-Matrix2050[j][i] >= 0:
                         newedges.append(
-                            (Nations[i], Nations[j], (NewMatrix[i][j])))
+                            (Nations[i], Nations[j], (Matrix2050[i][j])))
                     else:
                         newedges.append(
-                            (Nations[j], Nations[i], (NewMatrix[j][i])))
+                            (Nations[j], Nations[i], (Matrix2050[j][i])))
                 else:
                     pass
             else:
                 pass
     return newedges
 
-print("New consumption (TWh):")
-for i in range(len(Nations)):
-    print(Nations[i], ":", NewCons[i])
+def LogResults(Nations, NewCons, Matrix2050):
+    print("New consumption (TWh):")
+    for i in range(len(Nations)):
+        print(Nations[i], ":", NewCons[i])
 
 
-print("New electricity links (W):")
-for i in range(len(Nations)):
-    for j in range(len(Nations)):
-        if NewMatrix[i][j] != 0:
-            print(Nations[i], "->", Nations[j], ":", NewMatrix[i][j])
+    print("New electricity links (W):")
+    for i in range(len(Nations)):
+        for j in range(len(Nations)):
+            if Matrix2050[i][j] != 0:
+                print(Nations[i], "->", Nations[j], ":", Matrix2050[i][j])
 
-
+'''
 NewSupply = []
 for i in range(len(Nations)):
     NewSupply.append(Gap[i]+Balance[i]*(8760*10**-9))
-
+'''
 
 '''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
 
 
-def NewCleanEnergy():
+def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutCoal):
     addnuclear = []
     addsolarwind = []
     SolarWind = []
 
     df = pd.read_csv("DataSet/Electricity_Production_TWh_FINAL.txt")
-    for i in range(len(Nations)):
+    for i in range(len(nodes)):
         SolarWind.append(float(df.iloc[i, 5])+float(df.iloc[i, 7]))
 
     solarwind = []
-    for i in range(len(Nations)):
+    for i in range(len(nodes)):
         solarwind.append(SolarWind[i])
         addsolarwind.append(0.0)
         addnuclear.append(0.0)
@@ -392,22 +400,24 @@ def NewCleanEnergy():
             provv = provv+0.1  # break condition
             addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
 
+
+    NewSolar = []
+    NewWind = []
+    NewNuclear = []
+    for i in range(len(nodes)):
+        NewSolar.append(addsolarwind[i]/1)
+        NewWind.append(addsolarwind[i]/2.5)
+        NewNuclear.append(addnuclear[i]/7.5)
+        print(
+            nodes[i], ":\n-Nuclear: {:.2f} TWh -> {:.2f} GW".format(addnuclear[i], NewNuclear[i]))
+        print("-Renewables: {:.2f} TWh -> {:.2f}-{:.2f} GW".format(
+            addsolarwind[i], NewWind[i], NewSolar[i]))
+
     return addsolarwind, addnuclear
 
 
-AddSolarWind, AddNuclear = NewCleanEnergy()
 
-NewSolar = []
-NewWind = []
-NewNuclear = []
-for i in range(len(Nations)):
-    NewSolar.append(AddSolarWind[i]/1)
-    NewWind.append(AddSolarWind[i]/2.5)
-    NewNuclear.append(AddNuclear[i]/7.5)
-    print(
-        Nations[i], ":\n-Nuclear: {:.2f} TWh -> {:.2f} GW".format(AddNuclear[i], NewNuclear[i]))
-    print("-Renewables: {:.2f} TWh -> {:.2f}-{:.2f} GW".format(
-        AddSolarWind[i], NewWind[i], NewSolar[i]))
+
 
 
 '''
@@ -416,7 +426,7 @@ for the creation of the nodes of the graph.
 '''
 
 
-def GetCarbonDensity2050():
+def GetCarbonDensity2050(nodes, AddNuclear, AddSolarWind):
     Num = []
     Den = []
     IncrNum = []
@@ -431,7 +441,7 @@ def GetCarbonDensity2050():
             den = float(row[9])-float(row[1])-float(row[2])-float(row[6])
             Num.append(num)
             Den.append(den)
-        for i in range(len(Nations)):
+        for i in range(len(nodes)):
             incrnum = (AddNuclear[i]*12+AddSolarWind[i]
                        * 44)/(AddNuclear[i]+AddSolarWind[i])
             incrden = AddNuclear[i]+AddSolarWind[i]
@@ -444,17 +454,54 @@ def GetCarbonDensity2050():
     return carbonDensity2050
 
 
-CarbonDensity2050 = GetCarbonDensity2050()
 
 
-G=gp.DGraph()
-G.LinksCreation(NetworkEdges())
-G.LinkDensity()
+#'''
+if __name__ == "__main__":
 
-uG=gp.DGraph()
-uG.LinksCreation(NewEdges())
-uG.LinkDensity()
-uG.Communities()
+    Nations = GetNodes()
+    TotalProduction = GetTotalProduction()
+    CarbonDensity = GetCarbonDensity()
+    Matrix = FillMatrix(Nations)
 
-dr.plot(G, TotalConsumption, dr.ColorMap(G, RealCarbonDensity))
-dr.plot(uG, NewCons, dr.ColorMap(uG, CarbonDensity2050))
+    TotalConsumption, RealCarbonDensity = RCD(Nations, Matrix, CarbonDensity, TotalProduction)
+
+    ClosenessCentrality=ccGraph(Nations, Matrix)
+    CoalDeficit = CoalDeficitCalculator()
+    ConsumptionWithoutCoal=ConsWithoutCoal(Nations, TotalConsumption, CoalDeficit)
+    Consumption2050=NewConsumptionCalculator(Nations, TotalConsumption)
+    Gap=ProductionDeficit(Nations, Consumption2050, ConsumptionWithoutCoal)
+    PIL=GetPIL()
+    NewPower = NewPowerFunction(Nations, Gap, PIL, ClosenessCentrality)
+    Balance=Balances(Nations, NewPower, Gap)
+
+
+    
+    
+    while iterator2(Nations, Balance, Consumption2050):
+        calculator(Nations, Balance, Consumption2050, PIL, ClosenessCentrality)
+        assert (sum(Balance) < 1*10**2 and sum(Balance) > -1*10**2)
+
+    NewMatrix = np.zeros((len(Nations), len(Nations)))
+    NewImpExp=NewGrid(Nations, Balance)
+    
+    while iterator(NewImpExp):
+        magia(Nations, NewImpExp, Matrix, NewMatrix)
+
+    LogResults(Nations, Consumption2050, NewMatrix)
+
+    AddSolarWind, AddNuclear = NewCleanEnergy(Nations, Consumption2050, Balance, ConsumptionWithoutCoal)
+    CarbonDensity2050 = GetCarbonDensity2050(Nations, AddNuclear, AddSolarWind)
+
+    G = gp.DGraph()
+    G.LinksCreation(NetworkEdges(Nations, Matrix))
+
+    uG = gp.DGraph()
+    uG.LinksCreation(NewEdges(Nations, Matrix, NewMatrix))
+    uG.LinkDensity()
+    uG.Communities()
+    uG.hits()
+
+    dr.plot(G, TotalConsumption, dr.ColorMap(G, RealCarbonDensity))
+    dr.plot(uG, Consumption2050, dr.ColorMap(uG, CarbonDensity2050))
+#'''
