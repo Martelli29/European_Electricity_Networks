@@ -26,7 +26,7 @@ class DGraph:
     def LinkDensity(self):
         density = nx.density(self.graph)
         density = round(density, 4)
-        print("Density of the graph:", density)
+        print("Density of the graph:", density, "\n")
 
     def Communities(self):
         partition = nx.community.greedy_modularity_communities(self.graph, weight='weight')
@@ -36,6 +36,7 @@ class DGraph:
         for community_id, community in enumerate(partition):
             for node in community:
                 print(f"Nodo {node}: Comunità {community_id}")
+        print()        
 
     def hits(self):
         hubs, authorities = nx.hits(
@@ -53,7 +54,7 @@ class DGraph:
         print("Authorities:")
         for node, value in authorities:
             print(f"{node}: {value}")
-
+        print()
 
 class UGraph:
     def __init__(self):
@@ -70,7 +71,7 @@ class UGraph:
     def LinkDensity(self):
         density = nx.density(self.graph)
         density = round(density, 4)
-        print("Density of the graph:", density)
+        print("Density of the graph:", density,"\n")
 
     def get_weights(self):
         return [self.graph[u][v]['weight']/400000 for u,v in self.graph.edges()]
@@ -83,36 +84,41 @@ class UGraph:
         for community_id, community in enumerate(partition):
             for node in community:
                 print(f"Nodo {node}: Comunità {community_id}")
+        print()
 
-    def centralities(self, graph):
-        currentflow = nx.current_flow_betweenness_centrality(graph, weight='weight')
+    def Centralities(self):
+        currentflow = nx.current_flow_betweenness_centrality(self.graph, weight='weight')
         currentflow = sorted(currentflow.items(), key=lambda x: x[1], reverse=True)
         print("Current flow betweenness centrality:")
         for node, centrality in currentflow:
             centrality = round(centrality, 3)
             print(f"{node}: {centrality}")
+        print()
 
         edgecurrentflow = nx.edge_current_flow_betweenness_centrality(
-            graph, weight='weight')
+            self.graph, weight='weight')
         edgecurrentflow = sorted(edgecurrentflow.items(),
                                  key=lambda x: x[1], reverse=True)
         print("Edge current flow betweenness centrality:")
         for edge, centrality in edgecurrentflow:
             centrality = round(centrality, 3)
             print(f"{edge}: {centrality}")
+        print()
 
         currentflowcloseness = nx.current_flow_closeness_centrality(
-            graph, weight='weight')
+            self.graph, weight='weight')
         currentflowcloseness = sorted(
             currentflowcloseness.items(), key=lambda x: x[1], reverse=True)
         print("Current flow closeness centrality:")
         for node, centrality in currentflowcloseness:
             centrality = round(centrality, 3)
             print(f"{node}: {centrality}")
+        print()
 
-        laplacian = nx.laplacian_centrality(graph, weight='weight')
+        laplacian = nx.laplacian_centrality(self.graph, weight='weight')
         laplacian = sorted(laplacian.items(), key=lambda x: x[1], reverse=True)
         print("Laplacian centrality:")
         for node, centrality in laplacian:
             centrality = round(centrality, 3)
             print(f"{node}: {centrality}")
+        print()
