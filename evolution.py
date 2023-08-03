@@ -3,6 +3,7 @@ import pandas as pd
 import csv
 import numpy as np
 import draw as dr
+import graph as gp
 
 '''This function get the names of the nodes of the network'''
 
@@ -46,17 +47,6 @@ for i in range(len(Nations)):
     lista.append(t)
 
 
-G = nx.DiGraph()  # inizialization oh the graph
-
-
-def NodeConstruction():  # construction of the node with the name of the states
-    for i in range(len(Nations)):
-        G.add_node(str(Nations[i]))
-
-
-
-NodeConstruction()
-
 '''
 here there is the function that fill the Matrix with the data
 of the import-export of the electricity through the states.
@@ -64,10 +54,10 @@ of the import-export of the electricity through the states.
 
 
 def FillMatrix():
-    matrix = np.zeros((len(G.nodes), len(G.nodes)))
+    matrix = np.zeros((len(Nations), len(Nations)))
     df = pd.read_csv("DataSet/Imp-Exp_2017-19.txt")
-    for i in range(len(G.nodes)):
-        for j in range(len(G.nodes)):
+    for i in range(len(Nations)):
+        for j in range(len(Nations)):
             if not df.loc[(df['source'] == Nations[i]) & (df['target'] == Nations[j])].empty:
                 matrix[i][j] = df.loc[(df['source'] == Nations[i]) & (
                     df['target'] == Nations[j]), 'value'].iloc[0]
@@ -93,12 +83,12 @@ def RCD():
     Den = []
     Cons = []
 
-    for i in range(len(G)):
+    for i in range(len(Nations)):
         num = 0
         den = 0
         cons = 0
 
-        for j in range(len(G)):
+        for j in range(len(Nations)):
             if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
                 num = num+Matrix[j][i]*(8760*10**-9)*CarbonDensity[j]
                 den = den+Matrix[j][i]*(8760*10**-9)
@@ -120,11 +110,6 @@ def RCD():
 
 
 TotalConsumption, RealCarbonDensity = RCD()
-
-'''
-This function is used for the color of the nodes in the visualization of the graph, colors represent
-the carbon density of the electric generation.
-'''
 
 
 '''
@@ -151,32 +136,21 @@ def NetworkEdges():
     return edges
 
 
-Edges = NetworkEdges()  # Used for the assignement of the links to the network
-G.add_weighted_edges_from(Edges)
-
-
-def LogDensity(graph):
-    density = nx.density(graph)
-    density = round(density, 4)
-    print("Density of the new graph:", density)
-
-
-
 '''
 Undirected unweighted graph created for the calculation of a closeness centrality
 used on the following code
 '''
-bcG = nx.Graph()
-bcMatrix = np.zeros((len(Nations), len(Nations)))
+ccG = nx.Graph()
+ccMatrix = np.zeros((len(Nations), len(Nations)))
 
-for i in range(len(G)):
-    for j in range(len(G)):
+for i in range(len(Nations)):
+    for j in range(len(Nations)):
         if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-            bcG.add_edge(Nations[i], Nations[j])
+            ccG.add_edge(Nations[i], Nations[j])
         else:
             pass
 
-cc = nx.closeness_centrality(bcG)
+cc = nx.closeness_centrality(ccG)
 cc = [cc[nation] for nation in Nations]
 
 '''Creation of a list that has the coal production for each state that will be removed'''
@@ -292,12 +266,12 @@ for i in range(len(Nations)):
 
 
 def magia():
-    for i in range(len(G)):
+    for i in range(len(Nations)):
         if NewImpExp[i] > 0.0:
             NewImpExp[i] = NewImpExp[i]-1*10**2
             non_zero_count = 0
 
-            for count in range(len(G)):
+            for count in range(len(Nations)):
                 # state that need electricity
                 if Matrix[i][count] != 0 and NewImpExp[count] < 1*10**2:
                     non_zero_count = non_zero_count+1
@@ -305,7 +279,7 @@ def magia():
                     pass
 
             if non_zero_count != 0:
-                for j in range(len(G)):
+                for j in range(len(Nations)):
                     if Matrix[i][j] != 0.0 and NewImpExp[j] < 1*10**2:
                         NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
                         NewMatrix[i][j] = NewMatrix[i][j] + \
@@ -318,13 +292,13 @@ def magia():
                 assert (sum(NewImpExp) < 1*10**2 and sum(NewImpExp) > -1*10**2)
 
             elif non_zero_count == 0:
-                for count in range(len(G)):
+                for count in range(len(Nations)):
                     if Matrix[i][count] != 0:
                         non_zero_count = non_zero_count+1
                     else:
                         pass
 
-                for j in range(len(G)):
+                for j in range(len(Nations)):
                     if Matrix[i][j] != 0.0:
                         NewImpExp[j] = NewImpExp[j]+(1*10**2/non_zero_count)
                         NewMatrix[i][j] = NewMatrix[i][j] + \
@@ -353,21 +327,23 @@ while iterator(NewImpExp):
     magia()
 
 '''Function that create the links of the evoluted network using the value calculated from the previous function'''
-NewEdges = []
-for i in range(len(Nations)):
-    for j in range(len(Nations)):
-        if i < j:
-            if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-                if NewMatrix[i][j]-NewMatrix[j][i] >= 0:
-                    NewEdges.append(
-                        (Nations[i], Nations[j], (NewMatrix[i][j])))
+def NewEdges():
+    newedges = []
+    for i in range(len(Nations)):
+        for j in range(len(Nations)):
+            if i < j:
+                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
+                    if NewMatrix[i][j]-NewMatrix[j][i] >= 0:
+                        newedges.append(
+                            (Nations[i], Nations[j], (NewMatrix[i][j])))
+                    else:
+                        newedges.append(
+                            (Nations[j], Nations[i], (NewMatrix[j][i])))
                 else:
-                    NewEdges.append(
-                        (Nations[j], Nations[i], (NewMatrix[j][i])))
+                    pass
             else:
                 pass
-        else:
-            pass
+    return newedges
 
 print("New consumption (TWh):")
 for i in range(len(Nations)):
@@ -384,7 +360,6 @@ for i in range(len(Nations)):
 NewSupply = []
 for i in range(len(Nations)):
     NewSupply.append(Gap[i]+Balance[i]*(8760*10**-9))
-    # print(Nations[i], Gap[i], Balance[i], NewSupply[i])
 
 
 '''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
@@ -471,31 +446,15 @@ def GetCarbonDensity2050():
 
 CarbonDensity2050 = GetCarbonDensity2050()
 
-'''Inizialization of the new graph'''
-uG = nx.DiGraph()
 
-for i in range(len(Nations)):
-    uG.add_node(str(Nations[i]))
+G=gp.DGraph()
+G.LinksCreation(NetworkEdges())
+G.LinkDensity()
 
-uG.add_weighted_edges_from(NewEdges)
-
-
-
-
-def Communities():
-    partition = nx.community.greedy_modularity_communities(G, weight='weight')
-
-    # Stampa l'assegnazione delle comunità per ogni nodo
-    print("Communitites:")
-    for community_id, community in enumerate(partition):
-        for node in community:
-            print(f"Nodo {node}: Comunità {community_id}")
-
-
-Communities()
-
-
-LogDensity(uG)
+uG=gp.DGraph()
+uG.LinksCreation(NewEdges())
+uG.LinkDensity()
+uG.Communities()
 
 dr.plot(G, TotalConsumption, dr.ColorMap(G, RealCarbonDensity))
 dr.plot(uG, NewCons, dr.ColorMap(uG, CarbonDensity2050))

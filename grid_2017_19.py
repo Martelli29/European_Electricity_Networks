@@ -1,4 +1,3 @@
-import networkx as nx
 import pandas as pd
 import csv
 import numpy as np
@@ -54,9 +53,6 @@ pes = sum(lista)/a
 pes = round(pes, 2)
 print("Mean carbon density is:", pes)
 
-G=gp.DGraph()
-
-
 
 '''
 here there is the function that fill the Matrix with the data
@@ -85,7 +81,7 @@ This function creates the links of the graph.
 '''
 
 
-def NetwokEdges():
+def NetworkEdges():
     edges = []
     for i in range(len(Nations)):
         for j in range(len(Nations)):
@@ -105,8 +101,8 @@ def NetwokEdges():
     return edges
 
 
-
-G.LinksCreation(NetwokEdges())
+G = gp.DGraph()
+G.LinksCreation(NetworkEdges())
 G.LinkDensity()
 G.Communities()
 G.hits()
@@ -119,4 +115,3 @@ States with high value of hub have a great capacity to export electricity to oth
 states with high value oh authority have a high dependance on the electricity imported
 from other countries. 
 '''
-

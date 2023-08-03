@@ -61,16 +61,22 @@ class UGraph:
         for i in range(len(Nations)):
            self.graph.add_node(str(Nations[i]))
 
+    def __len__(self):
+        return len(self.graph)
+
     def LinksCreation(self, WeightList):
         self.graph.add_weighted_edges_from(WeightList)
 
     def LinkDensity(self):
-        density = nx.density()
+        density = nx.density(self.graph)
         density = round(density, 4)
         print("Density of the graph:", density)
 
-    def Communities(self, graph):
-        partition = nx.community.greedy_modularity_communities(graph, weight='weight')
+    def get_weights(self):
+        return [self.graph[u][v]['weight']/400000 for u,v in self.graph.edges()]
+
+    def Communities(self):
+        partition = nx.community.greedy_modularity_communities(self.graph, weight='weight')
 
         # Stampa l'assegnazione delle comunità per ogni nodo
         print("Communitites:")
