@@ -5,10 +5,15 @@ import numpy as np
 import draw as dr
 import graph as gp
 
-'''This function get the names of the nodes of the network'''
-
 
 def GetNodes():
+    '''
+    This function gets the names of the nodes of the network
+    from "Nations.txt" file and puts them in a list.
+
+    This function returns a list with the names of the nodes.
+    '''
+
     nations = []
     with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
@@ -17,10 +22,14 @@ def GetNodes():
     return nations
 
 
-'''in this file we get the values of electricity production for each state'''
-
-
 def GetTotalProduction():
+    '''
+    this function gets the values of the total electricity production (TWh)
+    for each state from "Electricity_Production_TWh_FINAL.txt" and puts them in a list.
+
+    This function returns a list with the electricity of the nodes.
+    '''
+
     totalproduction = []
     with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
         TotalEnergy = csv.reader(file)
@@ -32,10 +41,14 @@ def GetTotalProduction():
     return totalproduction
 
 
-'''in this file we get the values of the carbon intensity of the electricity generation for each state'''
-
-
 def GetCarbonDensity():
+    '''
+    This function gets the values of the electricity carbon density (gCO2/kWh)
+    for each state from "sharebysourceCarbonDensity.txt" and put them in a list.
+
+    This function returns a list with the electricity carbon density of the nodes. 
+    '''
+
     carbondensity = []
     with open("DataSet/sharebysourceCarbonDensity.txt", "r") as file:
         contribute = csv.reader(file)
@@ -47,13 +60,19 @@ def GetCarbonDensity():
     return carbondensity
 
 
-'''
-here there is the function that fill the Matrix with the data
-of the import-export of the electricity through the states.
-'''
-
-
 def FillMatrix(Nations):
+    '''
+    This function creates an adjaceny matrix (nxn) where n is a number of the nodes
+    of the network and fills it with the values of the electricity (W)
+    using "Imp-Exp_2017-19.txt" file.
+
+    This function needs one parameter:
+    -Nations (list): name of the nodes/nations of the graph.
+
+    This function returns a matrix in which each value x_ij represents
+    the amount of electricity flowing from the i-th node to the j-th node.
+    '''
+
     matrix = np.zeros((len(Nations), len(Nations)))
     df = pd.read_csv("DataSet/Imp-Exp_2017-19.txt")
     for i in range(len(Nations)):
@@ -67,13 +86,21 @@ def FillMatrix(Nations):
     return matrix
 
 
-'''
-This function is used for calculate the total consumption and carbon density for each state
-considering the contributes of the electricity import-export
-'''
-
-
 def RCD(Nations, AdjMatrix, carbondensity, totalproduction):
+    '''
+    This function calculates total consumption and carbon density of each state that
+    considers also the contributes of the electricity import-export.
+
+    This function needs four parameters:
+    -Nations (list): name of the nodes/nations of the graph.
+    -AdjMatrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+    -carbondensity (list): values of the carbon density of the states.
+    -totalproduction (list): values of the energy production of the states.
+
+    This function return two list that are the total consumption and the carbon
+    density of the states also considering the electricity trades.
+    '''
+
     totalconsumption = []
     realcarbondensity = []
 
@@ -88,6 +115,7 @@ def RCD(Nations, AdjMatrix, carbondensity, totalproduction):
 
         for j in range(len(Nations)):
             if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
+                # 8760*10**-9 is W-TWh conversion
                 num = num+AdjMatrix[j][i]*(8760*10**-9)*carbondensity[j]
                 den = den+AdjMatrix[j][i]*(8760*10**-9)
                 cons = cons-AdjMatrix[i][j] + AdjMatrix[j][i]
@@ -107,12 +135,19 @@ def RCD(Nations, AdjMatrix, carbondensity, totalproduction):
     return totalconsumption, realcarbondensity
 
 
-'''
-This function creates the links of the graph.
-'''
-
-
 def NetworkEdges(Nations, AdjMatrix):
+    '''
+    This function fills a list that networkx needs for the creation of the links
+    for a weighted directed network.
+
+    This function needs teo parameters:
+    -Nations (list): name of the nodes/nations of the graph.
+    -AdjMat (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+
+    This function returns a list with the flux x_ij between states in a format that
+    is accepted by NetworkX.
+    '''
+
     edges = []
     for i in range(len(Nations)):
         for j in range(len(Nations)):
@@ -131,118 +166,12 @@ def NetworkEdges(Nations, AdjMatrix):
     return edges
 
 
-'''
-Undirected unweighted graph created for the calculation of a closeness centrality
-used on the following code
-'''
-
-
-def ccGraph(Nations, AdjMatrix):
-    ccG = nx.Graph()
-    ccMatrix = np.zeros((len(Nations), len(Nations)))
-
-    for i in range(len(Nations)):
-        for j in range(len(Nations)):
-            if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
-                ccG.add_edge(Nations[i], Nations[j])
-            else:
-                pass
-
-    cc = nx.closeness_centrality(ccG)
-    cc = [cc[nation] for nation in Nations]
-
-    return cc
-
-
-'''Creation of a list that has the coal production for each state that will be removed'''
-
-
-def CoalDeficitCalculator():
-    coaldeficit = []
-    with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
-        TotalEnergy = csv.reader(file)
-        next(TotalEnergy)   # skip first row
-        for row in TotalEnergy:
-            last_column = float(row[1])+float(row[2])+float(row[6])
-            coaldeficit.append(last_column)
-        coaldeficit = list(map(float, coaldeficit))
-    return coaldeficit
-
-
-'''Electricity consumption without the coal'''
-
-
-def ConsWithoutCoal(Nations, totalconsumption, coaldeficit):
-    conswithoutcoal = []
-    for i in range(len(Nations)):
-        conswithoutcoal.append(totalconsumption[i]-coaldeficit[i])
-    return conswithoutcoal
-
-
-'''
-There is the creation of two list, first one is a prevision of the total consumption
-for each state that in 2050 that has been hypothesized to be 40% greater.
-Second list is a calculation of a gap that each state have to be closed from the actual
-energy prouction without the coal, gas, oil and the future electricity consumption.
-'''
-
-
-def NewConsumptionCalculator(Nations, TotalCons):
-    NewCons = []
-    for i in range(len(Nations)):
-        NewCons.append(TotalCons[i]+0.4*TotalCons[i])
-    return NewCons
-
-
-def ProductionDeficit(Nations, NewCons, ConsWithoutCoal):
-    gap = []
-    for i in range(len(Nations)):
-        gap.append(NewCons[i]-ConsWithoutCoal[i])
-    return gap
-
-
-'''Actual PIL of the states that will be used as a criterion for the allocation of the new electricity supply.'''
-
-
-def GetPIL():
-    pil = []
-    with open("DataSet/Nations.txt", "r") as file:
-        next(file)  # skip first row
-        next(file)  # skip second row
-        row = next(file)  # third row
-        pil = row.strip().split(",")
-        pil = list(map(float, pil))
-    return pil
-
-
-'''Allocation for each state of the new power'''
-
-
-def NewPowerFunction(Nodes, gap, pil, cc):
-    newpower = []
-    for i in range(len(Nodes)):
-        newpower.append(sum(gap)*(pil[i]/sum(pil)+(cc[i]/sum(cc)))/2)
-    return newpower
-
-
-'''Calculation of the balance of the electricity that each state has from the import-export'''
-
-
-def Balances(Nodes, newpower, gap):
-    balance = []
-    for i in range(len(Nodes)):
-        balance.append(newpower[i]-gap[i])
-        balance[i] = balance[i]/(8760*10**-9)
-    return balance
-
-
-'''
-Function that allow to reorganize the new imp-exp balance in sucha a way that each state
-don't import an amount of electricity greater than 5% of the own total consumption.
-'''
-
-
 def calculator(nodes, Balance, NewCons, pil, cc):
+    '''
+    Function that allow to reorganize the new imp-exp balance in such a way that each state
+    don't import an amount of electricity greater than 5% of the own total consumption
+    or don't export an amount of electricity than 15% of the own total consumption.
+    '''
     for i in range(len(nodes)):
 
         if Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05):
@@ -263,10 +192,16 @@ def calculator(nodes, Balance, NewCons, pil, cc):
             pass
 
 
-'''iterator of the previous function, this function run until the previous condition is satisfied.'''
+
 
 
 def iterator2(nodes, Balance, NewCons):
+    '''
+    This function is complementary to the function calculator.
+    Is used for reiterate the calculator function until the balance of each state allow
+    to import an amount of electricity smaller than 5% of the own total consumption or
+    not greater than 15% of the own total consumption.
+    '''
     for i in range(len(nodes)):
         if (Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15)):
             return True
@@ -288,6 +223,12 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
     for i in range(len(nodes)):
         ConsumptionWithoutCoal.append(totalconsumption[i]-CoalDeficit[i])
 
+    '''
+    There is the creation of two list, first one is a prevision of the total consumption
+    for each state that in 2050 that has been hypothesized to be 40% greater.
+    Second list is a calculation of a gap that each state have to be closed from the actual
+    energy prouction without the coal, gas, oil and the future electricity consumption.
+    '''
     Consumption2050 = []
     for i in range(len(nodes)):
         Consumption2050.append(totalconsumption[i]+0.4*totalconsumption[i])
@@ -296,6 +237,10 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
     for i in range(len(nodes)):
         Gap.append(Consumption2050[i]-ConsumptionWithoutCoal[i])
 
+    '''
+    Actual PIL of the states that will be used as a criterion for the allocation 
+    of the new electricity supply.
+    '''
     PIL = []
     with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
@@ -304,6 +249,10 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
         PIL = row.strip().split(",")
         PIL = list(map(float, PIL))
 
+    '''
+    Undirected unweighted graph created for the calculation of a closeness centrality
+    used on the following code
+    '''
     ccG = nx.Graph()
 
     for i in range(len(nodes)):
@@ -316,10 +265,12 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
     cc = nx.closeness_centrality(ccG)
     cc = [cc[nation] for nation in nodes]
 
+    '''Allocation for each state of the new power'''
     NewPower = []
     for i in range(len(nodes)):
         NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
 
+    '''Calculation of the balance of the electricity that each state has from the import-export'''
     Balance = []
     for i in range(len(nodes)):
         Balance.append(NewPower[i]-Gap[i])
@@ -518,7 +469,8 @@ if __name__ == "__main__":
     Nodes = GetNodes()
     Matrix = FillMatrix(GetNodes())
 
-    TotalConsumption, RealCarbonDensity = RCD(Nodes, Matrix, GetCarbonDensity(), GetTotalProduction())
+    TotalConsumption, RealCarbonDensity = RCD(
+        Nodes, Matrix, GetCarbonDensity(), GetTotalProduction())
 
     ConsumptionWithoutCoal, Consumption2050, Balance = MettiTuttoInsieme(
         Nodes, TotalConsumption, Matrix)
@@ -531,7 +483,8 @@ if __name__ == "__main__":
 
     LogResults(Nodes, Consumption2050, NewMatrix)
 
-    AddSolarWind, AddNuclear = NewCleanEnergy(Nodes, Consumption2050, Balance, ConsumptionWithoutCoal)
+    AddSolarWind, AddNuclear = NewCleanEnergy(
+        Nodes, Consumption2050, Balance, ConsumptionWithoutCoal)
     CarbonDensity2050 = GetCarbonDensity2050(Nodes, AddNuclear, AddSolarWind)
 
     G = gp.DGraph()
