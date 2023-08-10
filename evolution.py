@@ -142,7 +142,7 @@ def NetworkEdges(Nations, AdjMatrix):
 
     This function needs teo parameters:
     -Nations (list): name of the nodes/nations of the graph.
-    -AdjMat (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+    -AdjMatrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
 
     This function returns a list with the flux x_ij between states in a format that
     is accepted by NetworkX.
@@ -166,11 +166,18 @@ def NetworkEdges(Nations, AdjMatrix):
     return edges
 
 
-def calculator(nodes, Balance, NewCons, pil, cc):
+def Balancer(nodes, Balance, NewCons, pil, cc):
     '''
-    Function that allow to reorganize the new imp-exp balance in such a way that each state
+    Function that allow to redistribute the new imp-exp balance in such a way that each state
     don't import an amount of electricity greater than 5% of the own total consumption
     or don't export an amount of electricity than 15% of the own total consumption.
+
+    This function need five parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -Balance (list): difference between electricity consumption and electricity production of each state.
+    -NewCons (list): energy consumption of each state in 2050.
+    -pil (list): PIL of each state.
+    -cc (list): closeness centrality for each state of a unweighted undirected network. 
     '''
     for i in range(len(nodes)):
 
@@ -192,15 +199,17 @@ def calculator(nodes, Balance, NewCons, pil, cc):
             pass
 
 
-
-
-
-def iterator2(nodes, Balance, NewCons):
+def BalancerIterator(nodes, Balance, NewCons):
     '''
-    This function is complementary to the function calculator.
-    Is used for reiterate the calculator function until the balance of each state allow
+    This function is complementary to the function Balancer.
+    Is used for reiterate the Balancer function until the condition that allow
     to import an amount of electricity smaller than 5% of the own total consumption or
-    not greater than 15% of the own total consumption.
+    not greater than 15% of the own total consumption is satisfied.
+
+    This function need three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -Balance (list): difference between electricity consumption and electricity production of each state.
+    -NewCons (list): energy consumption of each state in 2050.
     '''
     for i in range(len(nodes)):
         if (Balance[i] < 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.05)) or (Balance[i] > 0 and (abs(Balance[i])*(8760*10**-9)/NewCons[i] > 0.15)):
@@ -209,33 +218,64 @@ def iterator2(nodes, Balance, NewCons):
 
 
 def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
+    '''
+    This is a big function that does a lot of small different calculations.
 
-    CoalDeficit = []
+    Initially the function takes the values of the electricity production of each state from
+    fossil fuels (gas, coal and oil) and subtract them from the total consumption of each state.
+    Then there is a creation of two list, first one is a prevision of the total consumption
+    for each state in 2050 that has been hypothesized to be 40% greater.
+    Second one is a calculation of a gap that each state have to be closed from the actual
+    energy prouction without the fossil fuels and the future electricity consumption.
+
+    To fill the missing power, a new criterion has been created. Each state have to contribute
+    on the new power supply proportionally on the PIL and closeness centrality of a
+    unweighted undirected network of the european electricity grid.
+    The results of this calculation are subtracted by the gap of each state.
+    The result is a list with the amount of electricity that each state have to
+    import (negative value) or export (positive value), obviously the summation of all
+    the import-export is equal to zero.
+
+    The final part of the function is one of the two heaviest computational parts of this project,
+    the functions Balancer(...) and IteratorBalancer(...) are called for obtain a more rational
+    values of the import-export between states (a more helpfully description of this two 
+    functions are in the declaration of them in the previous lines of this file).
+
+    This function needs three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -totalconsumption (list): electricity consumption of each state.
+    -adjmatrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+
+    This function returns three list that are used in the following part of the code: first 
+    one is the consumption of each state without the fossil fuels, second one is the
+    consumption of each state in 2050, last one is the amount of electricity that each state
+    have to import (negative value) or export (positive value).
+    '''
+
+    '''Fill a list with energy production without fossil fuels (FF).'''
+    FFDeficit = []
     with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
         TotalEnergy = csv.reader(file)
         next(TotalEnergy)   # skip first row
         for row in TotalEnergy:
             last_column = float(row[1])+float(row[2])+float(row[6])
-            CoalDeficit.append(last_column)
-        CoalDeficit = list(map(float, CoalDeficit))
+            FFDeficit.append(last_column)
+        FFDeficit = list(map(float, FFDeficit))
 
-    ConsumptionWithoutCoal = []
+    '''Fill a list with the energy consumption without fossil fuels.'''
+    ConsumptionWithoutFF = []
     for i in range(len(nodes)):
-        ConsumptionWithoutCoal.append(totalconsumption[i]-CoalDeficit[i])
+        ConsumptionWithoutFF.append(totalconsumption[i]-FFDeficit[i])
 
-    '''
-    There is the creation of two list, first one is a prevision of the total consumption
-    for each state that in 2050 that has been hypothesized to be 40% greater.
-    Second list is a calculation of a gap that each state have to be closed from the actual
-    energy prouction without the coal, gas, oil and the future electricity consumption.
-    '''
+    '''List with a increase of energy consumption in 2050 of 40%.'''
     Consumption2050 = []
     for i in range(len(nodes)):
         Consumption2050.append(totalconsumption[i]+0.4*totalconsumption[i])
 
+    '''Gap of energy supply that all countries have to fill'''
     Gap = []
     for i in range(len(nodes)):
-        Gap.append(Consumption2050[i]-ConsumptionWithoutCoal[i])
+        Gap.append(Consumption2050[i]-ConsumptionWithoutFF[i])
 
     '''
     Actual PIL of the states that will be used as a criterion for the allocation 
@@ -251,7 +291,7 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
 
     '''
     Undirected unweighted graph created for the calculation of a closeness centrality
-    used on the following code
+    used as a criterion for the allocation of the new electricity supply.
     '''
     ccG = nx.Graph()
 
@@ -265,21 +305,23 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
     cc = nx.closeness_centrality(ccG)
     cc = [cc[nation] for nation in nodes]
 
-    '''Allocation for each state of the new power'''
+    '''List with the new power supply for each state.'''
     NewPower = []
     for i in range(len(nodes)):
         NewPower.append(sum(Gap)*(PIL[i]/sum(PIL)+(cc[i]/sum(cc)))/2)
 
-    '''Calculation of the balance of the electricity that each state has from the import-export'''
+    '''Calculation of the balance of the electricity that each state have to import or export.'''
     Balance = []
     for i in range(len(nodes)):
         Balance.append(NewPower[i]-Gap[i])
         Balance[i] = Balance[i]/(8760*10**-9)
 
-    while iterator2(nodes, Balance, Consumption2050):
-        calculator(nodes, Balance, Consumption2050, PIL, cc)
+    '''Functions called for a more rational values of the Balance of each state.'''
+    while BalancerIterator(nodes, Balance, Consumption2050):
+        Balancer(nodes, Balance, Consumption2050, PIL, cc)
         assert (sum(Balance) < 1*10**2 and sum(Balance) > -1*10**2)
-    return ConsumptionWithoutCoal, Consumption2050, Balance
+
+    return ConsumptionWithoutFF, Consumption2050, Balance
 
 
 '''Function that calculate values that will be assigned to new links of the network'''
@@ -387,7 +429,7 @@ def LogResults(Nations, NewCons, Matrix2050):
 '''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
 
 
-def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutCoal):
+def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutFF):
     addnuclear = []
     addsolarwind = []
     SolarWind = []
@@ -409,7 +451,7 @@ def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutCoal):
             addsolarwind[i] = addsolarwind[i]+0.1
 
         # new consumption plus new solar/wind power, this variable will be used for the break condition of the next cycle
-        provv = ConsWithoutCoal[i]+addsolarwind[i]+(Balance[i]*(8760*10**-9))
+        provv = ConsWithoutFF[i]+addsolarwind[i]+(Balance[i]*(8760*10**-9))
         while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
             provv = provv+0.1  # break condition
             addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
@@ -467,12 +509,12 @@ def GetCarbonDensity2050(nodes, AddNuclear, AddSolarWind):
 if __name__ == "__main__":
 
     Nodes = GetNodes()
-    Matrix = FillMatrix(GetNodes())
+    Matrix = FillMatrix(Nodes)
 
     TotalConsumption, RealCarbonDensity = RCD(
         Nodes, Matrix, GetCarbonDensity(), GetTotalProduction())
 
-    ConsumptionWithoutCoal, Consumption2050, Balance = MettiTuttoInsieme(
+    ConsumptionWithoutFF, Consumption2050, Balance = MettiTuttoInsieme(
         Nodes, TotalConsumption, Matrix)
 
     NewMatrix = np.zeros((len(Nodes), len(Nodes)))
@@ -483,8 +525,9 @@ if __name__ == "__main__":
 
     LogResults(Nodes, Consumption2050, NewMatrix)
 
+
     AddSolarWind, AddNuclear = NewCleanEnergy(
-        Nodes, Consumption2050, Balance, ConsumptionWithoutCoal)
+        Nodes, Consumption2050, Balance, ConsumptionWithoutFF)
     CarbonDensity2050 = GetCarbonDensity2050(Nodes, AddNuclear, AddSolarWind)
 
     G = gp.DGraph()
