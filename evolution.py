@@ -86,7 +86,7 @@ def FillMatrix(Nations):
     return matrix
 
 
-def RCD(Nations, AdjMatrix, carbondensity, totalproduction):
+def RealCarbonDensity(Nations, AdjMatrix, carbondensity, totalproduction):
     '''
     This function calculates total consumption and carbon density of each state that
     considers also the contributes of the electricity import-export.
@@ -217,7 +217,7 @@ def BalancerIterator(nodes, Balance, NewCons):
     return False
 
 
-def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
+def Grid2050(nodes, totalconsumption, adjmatrix):
     '''
     This is a big function that does a lot of small different calculations.
 
@@ -327,14 +327,7 @@ def MettiTuttoInsieme(nodes, totalconsumption, adjmatrix):
 '''Function that calculate values that will be assigned to new links of the network'''
 
 
-def NewGrid(nodes, Balance):
-    newimpexp = []
-    for i in range(len(nodes)):
-        newimpexp.append(Balance[i])
-    return newimpexp
-
-
-def magia(nodes, newimpexp, matrix, matrix2050):
+def FlowsPropagator(nodes, newimpexp, matrix, matrix2050):
     for i in range(len(nodes)):
         if newimpexp[i] > 0.0:
             newimpexp[i] = newimpexp[i]-1*10**2
@@ -385,33 +378,41 @@ def magia(nodes, newimpexp, matrix, matrix2050):
 '''iterator of the previous function'''
 
 
-def iterator(newimpexp):
+def IterFlowsPropagator(newimpexp):
     for i in newimpexp:
         if i >= 1*10**2:
             return True
     return False
 
 
+def FillNewMatrix(nodes, balance, matrix, matrix2050):
+    NewImpExp = []
+    for i in range(len(nodes)):
+        NewImpExp.append(balance[i])
+    while IterFlowsPropagator(NewImpExp):
+        FlowsPropagator(nodes, NewImpExp, matrix, matrix2050)
+
+
 '''Function that create the links of the evoluted network using the value calculated from the previous function'''
 
 
-def NewEdges(Nations, Matrix, Matrix2050):
-    newedges = []
+def Edges2050(Nations, Matrix, Matrix2050):
+    edges2050 = []
     for i in range(len(Nations)):
         for j in range(len(Nations)):
             if i < j:
                 if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
                     if Matrix2050[i][j]-Matrix2050[j][i] >= 0:
-                        newedges.append(
+                        edges2050.append(
                             (Nations[i], Nations[j], (Matrix2050[i][j])))
                     else:
-                        newedges.append(
+                        edges2050.append(
                             (Nations[j], Nations[i], (Matrix2050[j][i])))
                 else:
                     pass
             else:
                 pass
-    return newedges
+    return edges2050
 
 
 def LogResults(Nations, NewCons, Matrix2050):
@@ -511,20 +512,17 @@ if __name__ == "__main__":
     Nodes = GetNodes()
     Matrix = FillMatrix(Nodes)
 
-    TotalConsumption, RealCarbonDensity = RCD(
+    TotalConsumption, RealCarbonDensity = RealCarbonDensity(
         Nodes, Matrix, GetCarbonDensity(), GetTotalProduction())
 
-    ConsumptionWithoutFF, Consumption2050, Balance = MettiTuttoInsieme(
+    ConsumptionWithoutFF, Consumption2050, Balance = Grid2050(
         Nodes, TotalConsumption, Matrix)
 
-    NewMatrix = np.zeros((len(Nodes), len(Nodes)))
-    NewImpExp = NewGrid(Nodes, Balance)
+    Matrix2050 = np.zeros((len(Nodes), len(Nodes)))
 
-    while iterator(NewImpExp):
-        magia(Nodes, NewImpExp, Matrix, NewMatrix)
+    FillNewMatrix(Nodes, Balance, Matrix, Matrix2050)
 
-    LogResults(Nodes, Consumption2050, NewMatrix)
-
+    LogResults(Nodes, Consumption2050, Matrix2050)
 
     AddSolarWind, AddNuclear = NewCleanEnergy(
         Nodes, Consumption2050, Balance, ConsumptionWithoutFF)
@@ -534,7 +532,7 @@ if __name__ == "__main__":
     G.LinksCreation(NetworkEdges(Nodes, Matrix))
 
     uG = gp.DGraph()
-    uG.LinksCreation(NewEdges(Nodes, Matrix, NewMatrix))
+    uG.LinksCreation(Edges2050(Nodes, Matrix, Matrix2050))
     uG.LinkDensity()
     uG.Communities()
     uG.hits()
