@@ -86,7 +86,7 @@ def FillMatrix(Nations):
     return matrix
 
 
-def RealCarbonDensity(Nations, AdjMatrix, carbondensity, totalproduction):
+def LinksContribute(Nations, AdjMatrix, carbondensity, totalproduction):
     '''
     This function calculates total consumption and carbon density of each state that
     considers also the contributes of the electricity import-export.
@@ -140,7 +140,7 @@ def NetworkEdges(Nations, AdjMatrix):
     This function fills a list that networkx needs for the creation of the links
     for a weighted directed network.
 
-    This function needs teo parameters:
+    This function needs two parameters:
     -Nations (list): name of the nodes/nations of the graph.
     -AdjMatrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
 
@@ -324,26 +324,42 @@ def Grid2050(nodes, totalconsumption, adjmatrix):
     return ConsumptionWithoutFF, Consumption2050, Balance
 
 
-'''Function that calculate values that will be assigned to new links of the network'''
+def FlowsPropagator(nodes, balance, matrix, matrix2050):
+    '''
+    In this function is implemented an algorithm for the propagation of the balance of the nodes:
+    to do this in each iteration are identified the nodes that has a surplus of energy (positive
+    value), this nodes export a quantum of energy (10**2) divided among neighbors states that
+    need electricity (negative value). If there are not neighbors that need electricity, the
+    quantum of electricity is divided among all neighbors that in the next iteration will
+    export to states that need electricity (thanks to IterFlowsPropagator(...)).
+    The values of the electricity that are traded between nodes are used to fill a new
+    adjacency matrix.
 
+    This is the heaviest computational part of the project, if you want to reduce the   
+    runtime you can modify the code using a bigger quantum of energy (e.g. 10**3).
 
-def FlowsPropagator(nodes, newimpexp, matrix, matrix2050):
+    This function needs four parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -balance (list): difference between electricity consumption and electricity production of each state.
+    -matrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+    -matrix2050 (matrix): adjacency matrix with the values of the flows x_ij between the nodes in 2050.
+    '''
     for i in range(len(nodes)):
-        if newimpexp[i] > 0.0:
-            newimpexp[i] = newimpexp[i]-1*10**2
+        if balance[i] > 0.0:
+            balance[i] = balance[i]-1*10**2
             non_zero_count = 0
 
             for count in range(len(nodes)):
                 # state that need electricity
-                if matrix[i][count] != 0 and newimpexp[count] < 1*10**2:
+                if matrix[i][count] != 0 and balance[count] < 1*10**2:
                     non_zero_count = non_zero_count+1
                 else:
                     pass
 
             if non_zero_count != 0:
                 for j in range(len(nodes)):
-                    if matrix[i][j] != 0.0 and newimpexp[j] < 1*10**2:
-                        newimpexp[j] = newimpexp[j]+(1*10**2/non_zero_count)
+                    if matrix[i][j] != 0.0 and balance[j] < 1*10**2:
+                        balance[j] = balance[j]+(1*10**2/non_zero_count)
                         matrix2050[i][j] = matrix2050[i][j] + \
                             (1*10**2/non_zero_count)
                         matrix2050[j][i] = matrix2050[j][i] - \
@@ -351,7 +367,7 @@ def FlowsPropagator(nodes, newimpexp, matrix, matrix2050):
                     else:
                         pass
 
-                assert (sum(newimpexp) < 1*10**2 and sum(newimpexp) > -1*10**2)
+                assert (sum(balance) < 1*10**2 and sum(balance) > -1*10**2)
 
             elif non_zero_count == 0:
                 for count in range(len(nodes)):
@@ -362,7 +378,7 @@ def FlowsPropagator(nodes, newimpexp, matrix, matrix2050):
 
                 for j in range(len(nodes)):
                     if matrix[i][j] != 0.0:
-                        newimpexp[j] = newimpexp[j]+(1*10**2/non_zero_count)
+                        balance[j] = balance[j]+(1*10**2/non_zero_count)
                         matrix2050[i][j] = matrix2050[i][j] + \
                             (1*10**2/non_zero_count)
                         matrix2050[j][i] = matrix2050[j][i] - \
@@ -370,22 +386,40 @@ def FlowsPropagator(nodes, newimpexp, matrix, matrix2050):
                     else:
                         pass
 
-                assert (sum(newimpexp) < 1*10**2 and sum(newimpexp) > -1*10**2)
+                assert (sum(balance) < 1*10**2 and sum(balance) > -1*10**2)
         else:
             pass
 
 
-'''iterator of the previous function'''
+def IterFlowsPropagator(balance):
+    '''
+    This function is complementary to the function FlowsPropagator(...).
+    Is used for reiterate the FlowsPropagator function until the values of balance
+    are all smaller than the value of the single quantum of electricity used 
+    in the propagation.
 
-
-def IterFlowsPropagator(newimpexp):
-    for i in newimpexp:
+    This function needs one parameter:
+    -balance (list): difference between electricity consumption and electricity production of each state.
+    '''
+    for i in balance:
         if i >= 1*10**2:
             return True
     return False
 
 
 def FillNewMatrix(nodes, balance, matrix, matrix2050):
+    '''
+    This function gets a copy of the list balance and uses it for the simulation 
+    that allows to fill the 2050 adjacency matrix calling FlowsPropagator(...)
+    and IterFlowsPropagator(...) functions.
+
+    This function needs four parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -balance (list): difference between electricity consumption and electricity production of each state.
+    -matrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+    -matrix2050 (matrix): adjacency matrix with the values of the flows x_ij between the nodes in 2050.
+
+    '''
     NewImpExp = []
     for i in range(len(nodes)):
         NewImpExp.append(balance[i])
@@ -396,18 +430,31 @@ def FillNewMatrix(nodes, balance, matrix, matrix2050):
 '''Function that create the links of the evoluted network using the value calculated from the previous function'''
 
 
-def Edges2050(Nations, Matrix, Matrix2050):
+def Edges2050(nodes, matrix, matrix2050):
+    '''
+    This function fills a list that networkx needs for the creation of the links
+    for a weighted directed network.
+
+    This function needs three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -matrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
+    -matrix2050 (matrix): adjacency matrix with the values of the flows x_ij between the nodes in 2050.
+
+    This function returns a list with the flux x_ij between states in a format that
+    is accepted by NetworkX.
+    '''
+
     edges2050 = []
-    for i in range(len(Nations)):
-        for j in range(len(Nations)):
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
             if i < j:
-                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
-                    if Matrix2050[i][j]-Matrix2050[j][i] >= 0:
+                if matrix[i][j] != 0.0 or matrix[j][i] != 0.0:
+                    if matrix2050[i][j]-matrix2050[j][i] >= 0:
                         edges2050.append(
-                            (Nations[i], Nations[j], (Matrix2050[i][j])))
+                            (nodes[i], nodes[j], (matrix2050[i][j])))
                     else:
                         edges2050.append(
-                            (Nations[j], Nations[i], (Matrix2050[j][i])))
+                            (nodes[j], nodes[i], (matrix2050[j][i])))
                 else:
                     pass
             else:
@@ -415,22 +462,43 @@ def Edges2050(Nations, Matrix, Matrix2050):
     return edges2050
 
 
-def LogResults(Nations, NewCons, Matrix2050):
+def LogResults(nodes, newcons, matrix2050):
+    '''
+    This function prints the results of the previous simulations:
+    In particular the function prints the values of the new comsunption (TWh) of each state
+    and the value of the electricity trade between each couple of states.
+
+    This function needs three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -newcons (list): energy consumption of each state in 2050.
+    -matrix2050 (matrix): adjacency matrix with the values of the flows x_ij between the nodes in 2050.
+    '''
     print("New consumption (TWh):")
-    for i in range(len(Nations)):
-        print(Nations[i], ":", NewCons[i])
+    for i in range(len(nodes)):
+        print(nodes[i], ":", newcons[i])
 
     print("New electricity links (W):")
-    for i in range(len(Nations)):
-        for j in range(len(Nations)):
-            if Matrix2050[i][j] != 0:
-                print(Nations[i], "->", Nations[j], ":", Matrix2050[i][j])
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if matrix2050[i][j] != 0:
+                print(nodes[i], "->", nodes[j], ":", matrix2050[i][j])
 
 
-'''This function calculate the contribute of the new power generated from solar/wind and nuclear '''
+def NewCleanEnergy(nodes, newcons, balance, ConsWithoutFF):
+    '''
+    This function calculates the new clean energy supply for each state, in this algorithm
+    the 50% of the electrcity supply must be covered by the renewable energy (solar and wind)
+    and the remaining part by nuclear energy.
 
+    This function needs three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -newcons (list): energy consumption of each state in 2050.
+    -balance (list): difference between electricity consumption and electricity production of each state.
+    -ConsWithoutFF (list): actual energy consumption without fossil fuels.
 
-def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutFF):
+    This function returns two lists containing the new implemented solar/wind
+    supply and nuclear supply.
+    '''
     addnuclear = []
     addsolarwind = []
     SolarWind = []
@@ -446,14 +514,14 @@ def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutFF):
         addnuclear.append(0.0)
 
         # 50% of the electricity supply have to come from wind and sun
-        while solarwind[i] <= 0.5*NewCons[i]+(Balance[i]*(8760*10**-9)):
+        while solarwind[i] <= 0.5*newcons[i]+(balance[i]*(8760*10**-9)):
             solarwind[i] = solarwind[i]+0.1  # useful only for the while cycle
             # 100 MW of new renewables added
             addsolarwind[i] = addsolarwind[i]+0.1
 
         # new consumption plus new solar/wind power, this variable will be used for the break condition of the next cycle
-        provv = ConsWithoutFF[i]+addsolarwind[i]+(Balance[i]*(8760*10**-9))
-        while provv < NewCons[i]:  # final gap that will be filled with new nuclear power
+        provv = ConsWithoutFF[i]+addsolarwind[i]+(balance[i]*(8760*10**-9))
+        while provv < newcons[i]:  # final gap that will be filled with new nuclear power
             provv = provv+0.1  # break condition
             addnuclear[i] = addnuclear[i]+0.1  # new nuclear power
 
@@ -472,13 +540,21 @@ def NewCleanEnergy(nodes, NewCons, Balance, ConsWithoutFF):
     return addsolarwind, addnuclear
 
 
-'''
-This function is used for the calculation of the carbon density of the states in 2050, it will be used 
-for the creation of the nodes of the graph.
-'''
-
-
 def GetCarbonDensity2050(nodes, AddNuclear, AddSolarWind):
+    '''
+    This function calculates the values of the electricity carbon density (gCO2/kWh)
+    for each state in 2050.
+    To do this, from file "DataSet/Electricity_Production_TWh_FINAL.txt" are taken the values
+    of the electricity production for each energy source, then are added to them the values
+    of the new solar/wind and nuclear supply.
+
+    This function needs three parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -AddNuclear (list): new nuclear supply that each state have to implement.
+    -AddSolarWind (list): new solar/wind supply that each state have to implement.
+
+    This function returns a list with the electricity carbon density of the nodes in 2050.
+    '''
     Num = []
     Den = []
     IncrNum = []
@@ -506,13 +582,12 @@ def GetCarbonDensity2050(nodes, AddNuclear, AddSolarWind):
     return carbonDensity2050
 
 
-# '''
 if __name__ == "__main__":
 
     Nodes = GetNodes()
     Matrix = FillMatrix(Nodes)
 
-    TotalConsumption, RealCarbonDensity = RealCarbonDensity(
+    TotalConsumption, RealCarbonDensity = LinksContribute(
         Nodes, Matrix, GetCarbonDensity(), GetTotalProduction())
 
     ConsumptionWithoutFF, Consumption2050, Balance = Grid2050(
@@ -528,15 +603,23 @@ if __name__ == "__main__":
         Nodes, Consumption2050, Balance, ConsumptionWithoutFF)
     CarbonDensity2050 = GetCarbonDensity2050(Nodes, AddNuclear, AddSolarWind)
 
-    G = gp.DGraph()
+    G = gp.DGraph()  # Creation of the graph declared in file graph.py.
+
+    # Creation of the links of the graphs.
     G.LinksCreation(NetworkEdges(Nodes, Matrix))
 
-    uG = gp.DGraph()
-    uG.LinksCreation(Edges2050(Nodes, Matrix, Matrix2050))
-    uG.LinkDensity()
-    uG.Communities()
-    uG.hits()
+    # Creation of the graph in 2050 declared in file graph.py.
+    G2050 = gp.DGraph()
 
+    # Creation of the links of the graph.
+    G2050.LinksCreation(Edges2050(Nodes, Matrix, Matrix2050))
+    
+    G2050.LinkDensity()  # Log of the link density of the graph.
+    
+    G2050.Communities()  # Log of the communities on the graph.
+    
+    G2050.hits()  # Log of HITS of the nodes of the graph.
+
+    # Plot of the graphs
     dr.plot(G, TotalConsumption, dr.ColorMap(G, RealCarbonDensity))
-    dr.plot(uG, Consumption2050, dr.ColorMap(uG, CarbonDensity2050))
-# '''
+    dr.plot(G2050, Consumption2050, dr.ColorMap(G2050, CarbonDensity2050))
