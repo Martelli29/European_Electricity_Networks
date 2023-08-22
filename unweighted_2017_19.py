@@ -5,10 +5,13 @@ import draw as dr
 import graph as gp
 
 
-'''This function get the names of the nodes of the network'''
-
-
 def GetName():
+    '''
+    This function gets the names of the nodes of the network
+    from "Nations.txt" file and puts them in a list.
+
+    This function returns a list with the names of the nodes.
+    '''
     nations = []
     with open("DataSet/Nations.txt", "r") as file:
         next(file)  # skip first row
@@ -17,9 +20,14 @@ def GetName():
     return nations
 
 
-'''in this file we get the values of electricity production for each state'''
 def GetTotalProduction():
-    totalproduction=[]
+    '''
+    This function gets the values of the total electricity production (TWh)
+    for each state from "Electricity_Production_TWh_FINAL.txt" and puts them in a list.
+
+    This function returns a list with the electricity of the nodes.
+    '''
+    totalproduction = []
     with open('DataSet/Electricity_Production_TWh_FINAL.txt', 'r') as file:
         TotalEnergy = csv.reader(file)
         next(TotalEnergy)   # skip first row
@@ -29,9 +37,15 @@ def GetTotalProduction():
         totalproduction = list(map(float, totalproduction))
     return totalproduction
 
-'''in this file we get the values of the carbon intensity of the electricity generation for each state'''
+
 def GetCarbonDensity():
-    carbondensity=[]
+    '''
+    This function gets the values of the electricity carbon density (gCO2/kWh)
+    for each state from "sharebysourceCarbonDensity.txt" and put them in a list.
+
+    This function returns a list with the electricity carbon density of the nodes. 
+    '''
+    carbondensity = []
     with open("DataSet/sharebysourceCarbonDensity.txt", "r") as file:
         contribute = csv.reader(file)
         next(file)  # skip first row
@@ -42,44 +56,53 @@ def GetCarbonDensity():
     return carbondensity
 
 
+def FillMatrix(nodes):
+    '''
+    This function creates an adjaceny matrix (nxn) where n is a number of the nodes
+    of the network and fills it with the values of the electricity (W)
+    using "Imp-Exp_2017-19.txt" file.
 
+    This function needs one parameter:
+    -nodes (list): name of the nodes/nations of the graph.
 
-'''
-here there is the function that fill the Matrix with the data
-of the import-export of the electricity through the states.
-'''
-
-
-def FillMatrix(nations):
-    matrix = np.zeros((len(nations), len(nations)))
+    This function returns a matrix in which each value x_ij represents
+    the amount of electricity flowing from the i-th node to the j-th node.
+    '''
+    matrix = np.zeros((len(nodes), len(nodes)))
     df = pd.read_csv("DataSet/Imp-Exp_2017-19.txt")
-    for i in range(len(nations)):
-        for j in range(len(nations)):
-            if not df.loc[(df['source'] == nations[i]) & (df['target'] == nations[j])].empty:
-                matrix[i][j] = df.loc[(df['source'] == nations[i]) & (
-                    df['target'] == nations[j]), 'value'].iloc[0]
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if not df.loc[(df['source'] == nodes[i]) & (df['target'] == nodes[j])].empty:
+                matrix[i][j] = df.loc[(df['source'] == nodes[i]) & (
+                    df['target'] == nodes[j]), 'value'].iloc[0]
             else:
                 pass
 
     return matrix
 
 
+def NetworkEdges(nodes, AdjMatrix):
+    '''
+    This function fills a list that networkx needs for the creation of the links
+    for a weighted undirected network.
 
-'''
-This function creates the links of the graph.
-'''
+    This function needs two parameters:
+    -nodes (list): name of the nodes/nations of the graph.
+    -AdjMatrix (matrix): adjacency matrix with the values of the flows x_ij between the nodes.
 
-
-def NetworkEdges():
+    This function returns a list with the flux x_ij between states in a format that
+    is accepted by NetworkX and an integer that represent the total flux (W) among the
+    nodes of the graph.
+    '''
     total = 0
     edges = []
-    for i in range(len(Nations)):
-        for j in range(len(Nations)):
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
             if i < j:
-                if Matrix[i][j] != 0.0 or Matrix[j][i] != 0.0:
+                if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
                     edges.append(
-                        (Nations[i], Nations[j], (Matrix[i][j]+Matrix[j][i])))
-                    total = total+Matrix[i][j]+Matrix[j][i]
+                        (nodes[i], nodes[j], (AdjMatrix[i][j]+AdjMatrix[j][i])))
+                    total = total+AdjMatrix[i][j]+AdjMatrix[j][i]
                 else:
                     pass
             else:
@@ -87,24 +110,29 @@ def NetworkEdges():
 
     return edges, total
 
-def GetTotalFlux(flux):
-    flux=round(flux, 1)
+
+def PrintTotalFlux(flux):
+    '''
+    This function print the total electricity flux between the nodes.
+
+    This function needs one parameter:
+    -flux (list): total flux of the graph.
+    '''
+    flux = round(flux, 1)
 
     print("Total flux of the graph:", flux, "(W)\n")
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
 
     Nations = GetName()
-    TotalProduction = GetTotalProduction()
-    CarbonDensity = GetCarbonDensity()
     Matrix = FillMatrix(Nations)
-    Edges, TotalFlux = NetworkEdges()
-    GetTotalFlux(TotalFlux)
+    Edges, TotalFlux = NetworkEdges(Nations, Matrix)
+    PrintTotalFlux(TotalFlux)
 
     G = gp.UGraph()
     G.LinksCreation(Edges)
     G.LinkDensity()
     G.Centralities()
     G.Communities()
-    dr.plot(G, TotalProduction, dr.ColorMap(G, CarbonDensity))
+    dr.plot(G, GetTotalProduction(), dr.ColorMap(G, GetCarbonDensity()))
