@@ -64,20 +64,17 @@ I used different datasets to create these networks. In the "DataSets"
 folder of the repository, you can find the raw files I worked on:
 "Flow_graph_2017-19.txt" and "Flow_graph_2020.txt" contain the data on
 power flows between states, which were used to create the links of the
-networks [1](https.//www.energygraph.info). The file "Electricity_Production_TWh.txt" contains the energy
+networks ([1](https://www.energygraph.info)). The file "Electricity_Production_TWh.txt" contains the energy
 production of each state (in TWh), which I used to set the dimensions of
-the nodes [2](https://www.kaggle.com/datasets/prateekmaj21/
-electricity-production-by-source-world). The file "share-elec-produc-by-source.txt" provides the
+the nodes ([2](https://www.kaggle.com/datasets/prateekmaj21/electricity-production-by-source-world)). The file "share-elec-produc-by-source.txt" provides the
 contribution of each type of electricity generation for each state,
-which I used to calculate the carbon density [3](https://www.kaggle.com/datasets/donjoeml/
-energy-consumption-and-generation-in-the-globe). I applied six different
+which I used to calculate the carbon density ([3](https://www.kaggle.com/datasets/donjoeml/energy-consumption-and-generation-in-the-globe)). I applied six different
 colorations: green for a production level below 100 gCO2/kWh, light
 green for a production level between 100-200 gCO2/kWh, yellow for a
 production level between 200-300 gCO2/kWh, orange for a production level
 between 300-400 gCO2/kWh, red for a production level between 400-500
 gCO2/kWh, and brown for a production level above 600 gCO2/kWh. The
-carbon intensity of each source of energy is taken from IPCC [4](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_
-ar5_annex-iii.pdf#page=7).
+carbon intensity of each source of energy is taken from IPCC ([4](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf#page=7)).
 
 The "DataSet" folder contains only raw and processed files that can be
 ignored for code execution. The relevant files are all located in the
@@ -102,9 +99,7 @@ data-reference="fig:2020">2</a>).
 Link density of the first network is 0.054 and for the second network is
 0.055. In all the graphs of the project have been identified the
 communities thanks to the built-in function of NetworkX (they are been
-identified using the Louvain method [5](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.community.louvain.
-louvain_communities.html)), communities are logged to the
+identified using the Louvain method ([5](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.louvain.louvain_communities.html))), communities are logged to the
 terminal by running the code.
 
 <figure id="fig:2017-19">
@@ -140,9 +135,7 @@ high carbon emissions.
 ## HITS algorithm
 
 From the previous networks has been calculated the HITS algorithm that
-it’s implemented on the library of NetworkX [6](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.link_analysis.hits_
-alg.hits.html#hits).
+it’s implemented on the library of NetworkX ([6](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_analysis.hits_alg.hits.html#hits)).
 
 Hyperlink-Induced Topic Search (HITS; also known as hubs and
 authorities) is a link analysis algorithm that rates Web pages, a good
@@ -288,31 +281,20 @@ table <a href="#tab:centralities" data-reference-type="ref"
 data-reference="tab:centralities">3</a>).
 
 The current flow betweenness centrality (computed thanks to
-corresponding NetworkX function [7](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.centrality.current_
-flow_betweenness_centrality.html#networkx.algorithms.
-centrality.current_flow_betweenness_centrality)) is calculated by measuring the amount
+corresponding NetworkX function ([7](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.current_low_betweenness_centrality.html#networkx.algorithms.centrality.current_flow_betweenness_centrality))) is calculated by measuring the amount
 of current that passes through that node when electrical current is
 injected at all possible source nodes and extracted at all possible sink
 nodes in the network. The more current that flows through a node, the
-higher its current flow betweenness centrality [8](https://www.centiserver.org/centrality/Current-Flow_
-Betweenness_Centrality/).
+higher its current flow betweenness centrality ([8](https://www.centiserver.org/centrality/Current-Flow_Betweenness_Centrality/)).
 
 The edge current flow betweenness centrality (computed thanks to
-corresponding NetworkX function [9](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.centrality.edge_
-current_flow_betweenness_centrality.html#networkx.algorithms.
-centrality.edge_current_flow_betweenness_centrality)) has the same aim of the current flow
+corresponding NetworkX function ([9](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.edge_current_flow_betweenness_centrality.html#networkx.algorithms.centrality.edge_current_flow_betweenness_centrality))) has the same aim of the current flow
 betweenness centrality but for the edges.
 
 The current flow closeness (computed thanks to corresponding NetworkX
-function [10](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.centrality.
-current_flow_closeness_centrality.html#networkx.algorithms.
-centrality.current_flow_closeness_centrality)) centrality is variant of closeness centrality based on
+function ([10](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.current_flow_closeness_centrality.html#networkx.algorithms.centrality.current_flow_closeness_centrality))) centrality is variant of closeness centrality based on
 effective resistance between nodes in a network. This metric is also
-known as information centrality [11](https://www.centiserver.org/centrality/Current-Flow_
-Closeness_Centrality/).
+known as information centrality ([11](https://www.centiserver.org/centrality/Current-Flow_Closeness_Centrality/)).
 
 |     | CFBC  |     |     |  CFCC   |     |     |  LC   |
 |:---:|:-----:|:----|:---:|:-------:|:----|:---:|:-----:|
@@ -360,15 +342,11 @@ Values of current flow betweenness centrality, current flow closeness
 centrality and laplacian centrality of the network.
 
 The Laplacian centralities (computed thanks to corresponding NetworkX
-function [12](https://networkx.org/documentation/stable/reference/
-algorithms/generated/networkx.algorithms.centrality.
-laplacian_centrality.html#networkx.algorithms.centrality.
-laplacian_centrality)) provides insights into the overall influence or significance
+function ([12](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.laplacian_centrality.html#networkx.algorithms.centrality.laplacian_centrality))) provides insights into the overall influence or significance
 of nodes in a network, nodes with high Laplacian centrality are those
 that are well-connected to other nodes and have a high influence within
 the network. They represent key positions that bridge different parts of
-the network or act as connectors between communities [13](https://www.centiserver.org/centrality/Laplacian_
-Centrality/).
+the network or act as connectors between communities ([13](https://www.centiserver.org/centrality/Laplacian_Centrality/)).
 
 The values of the edge current flow betweenness centrality are not fully
 reported in this relation because there are too many, the first four
