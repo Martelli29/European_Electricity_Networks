@@ -102,19 +102,13 @@ communities thanks to the built-in function of NetworkX (they are been
 identified using the Louvain method ([5](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.community.louvain.louvain_communities.html))), communities are logged to the
 terminal by running the code.
 
-<figure id="fig:2017-19">
-<img src="2017-19.png" style="width:86.0%" />
-<figcaption><span id="fig:2017-19" label="fig:2017-19"></span>Network of
-the European electricity grid in the years 2017-2019, for a better
-visualization run the code.</figcaption>
-</figure>
+![Error](Images/grid1719.png)
+Fig. 1: Network of the European electricity grid in the years 2017-2019, for a better
+visualization run the code.
 
-<figure id="fig:2020">
-<img src="2020.png" style="width:86.0%" />
-<figcaption><span id="fig:2020" label="fig:2020"></span>Network of the
-European electricity grid in the year 2020, for a better visualization
-run the code.</figcaption>
-</figure>
+![Error](Images/grid20.png)
+Fig. 2: Network of the European electricity grid in the year 2020, for a better visualization
+run the code.
 
 In the first network, representing the years 2017-2019, the total
 production of energy is 5025.3 TWh, and the carbon density is 313.8
@@ -248,7 +242,7 @@ COVID-19 (2017-2019).
 Values of hubs and authorities of the nodes on the year of the COVID-19
 (2020).
 
-## centrality measures
+## Centrality measures
 
 With this project we can determine also some centralities measures
 running the file "unweighted_2017-19.py", thanks to this code we can
@@ -263,12 +257,10 @@ calculated, the total flux of the electricity grid is 48.1 GW.
 
 Communities are logged to the terminal by running the code.
 
-<figure id="fig:unweighted">
-<img src="unweighted.png" style="width:100.0%" />
-<figcaption>Weighted undirected network of the European electric grid
+![Testo alternativo](Images/unweighted.png)
+Fig 3: Weighted undirected network of the European electric grid
 that represent all the flow through the nodes (for a better
-visualization run the code). </figcaption>
-</figure>
+visualization run the code).
 
 The centralities that have been calculated are four: current flow
 betweennes centrality (CFBC on table
@@ -401,11 +393,9 @@ neutral energy supply budget (fig
 <a href="#fig:evo" data-reference-type="ref"
 data-reference="fig:evo">4</a>).
 
-<figure id="fig:evo">
-<img src="evolution.png" style="width:100.0%" />
-<figcaption>Network of the European electricity grid after the
-simulation (for a better visualization run the code). </figcaption>
-</figure>
+![Error](Images/evolution.png)
+Fig. 4: Network of the European electricity grid after the simulation (for a better visualization run the code).
+
 
 The final step involves determining the energy sources that each state
 needs to implement. Among the available technologies, solar energy, wind
