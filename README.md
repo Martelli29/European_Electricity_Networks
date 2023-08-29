@@ -460,6 +460,7 @@ terminal by running the code.
 |  SVK   |   8.04-20.10    |     0.0      |          42.4           |
 |  TUR   |  61.92-154.80   |    21.81     |          401.8          |
 |  UKR   |   34.68-86.70   |     4.65     |          197.3          |
+
 Tab. 4: Values of current flow betweenness centrality, current flow closeness
 centrality and laplacian centrality of the network.
 
