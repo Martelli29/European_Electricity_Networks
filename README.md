@@ -47,7 +47,7 @@ you can install them using pip:
 
         pip install networkx
 
-if you don’t have pip you can install them with the following command
+if you don’t have pip, you can install them with the following command
 line:
 
         sudo apt-get install pip
@@ -82,7 +82,7 @@ main directory.
 
 ## Influence of the COVID-19 on the European electricity grid
 
-By executing the "2017-19.py" and "2020.py" scripts, we can obtain the
+By executing the "grid_2017_19.py" and "grid_2020.py" scripts, we can obtain the
 first two networks of the project. These are weighted directed networks
 where the links are created by calculating the total balance, which is
 determined by the difference in electricity flowing through two nodes in
@@ -90,11 +90,9 @@ both directions.
 
 The first script creates a network using data from the first week of
 2017 to the last week of 2019, taking the mean values
-(<a href="#fig:2017-19" data-reference-type="ref"
-data-reference="fig:2017-19">1</a>). The second script uses data from
+(fig. 1). The second script uses data from
 all weeks of 2020 to create another network
-(<a href="#fig:2020" data-reference-type="ref"
-data-reference="fig:2020">2</a>).
+(fig. 2).
 
 Link density of the first network is 0.054 and for the second network is
 0.055. In all the graphs of the project have been identified the
@@ -147,10 +145,7 @@ represent nodes with a deficit of electricity production, making them
 highly dependent on other nodes for their energy supply.
 
 The values of hits algorithm are in tables
-(<a href="#tab:hits1719" data-reference-type="ref"
-data-reference="tab:hits1719">1</a>) and
-(<a href="#tab:hits2020" data-reference-type="ref"
-data-reference="tab:hits2020">2</a>).
+(tab. 1) and (tab. 2).
 
 |     | Hubs  |     |     | Authorities |
 |:---:|:-----:|:----|:---:|:-----------:|
@@ -194,7 +189,7 @@ data-reference="tab:hits2020">2</a>).
 | MDA | 0.000 |     | PRT |    0.000    |
 | MLT | 0.000 |     | NOR |    0.000    |
 
-Values of hubs and authorities of the nodes for the years before the
+Tab. 1: Values of hubs and authorities of the nodes for the years before the
 COVID-19 (2017-2019).
 
 |     | Hubs  |     |     | Authorities |
@@ -239,7 +234,7 @@ COVID-19 (2017-2019).
 | ESP | 0.000 |     | EST |    0.000    |
 | FIN | 0.000 |     | NOR |    0.000    |
 
-Values of hubs and authorities of the nodes on the year of the COVID-19
+Tab. 2: Values of hubs and authorities of the nodes on the year of the COVID-19
 (2020).
 
 ## Centrality measures
@@ -248,9 +243,7 @@ With this project we can determine also some centralities measures
 running the file "unweighted_2017-19.py", thanks to this code we can
 obtain a new weighted undirected graph in which links are created with
 the sum of the electricty flows that passes through the nodes in both
-directions (fig. <a href="#fig:unweighted" data-reference-type="ref"
-data-reference="fig:unweighted">3</a>). I used the same dataset of
-"2017-19.py" file.
+directions (fig. 3). I used the same dataset of "grid_2017_19.py" file.
 
 Link density of this graph is 0.108 and also the total flux has been
 calculated, the total flux of the electricity grid is 48.1 GW.
@@ -263,14 +256,9 @@ that represent all the flow through the nodes (for a better
 visualization run the code).
 
 The centralities that have been calculated are four: current flow
-betweennes centrality (CFBC on table
-<a href="#tab:centralities" data-reference-type="ref"
-data-reference="tab:centralities">3</a>), edge current flow betweennes
-centrality, current flow closeness centralities (CFCC on table
-<a href="#tab:centralities" data-reference-type="ref"
-data-reference="tab:centralities">3</a>), laplacian centralities (LC on
-table <a href="#tab:centralities" data-reference-type="ref"
-data-reference="tab:centralities">3</a>).
+betweennes centrality (CFBC on table 3), edge current flow betweennes
+centrality, current flow closeness centralities (CFCC on table 3), laplacian centralities (LC on
+table 3).
 
 The current flow betweenness centrality (computed thanks to
 corresponding NetworkX function ([7](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.current_low_betweenness_centrality.html#networkx.algorithms.centrality.current_flow_betweenness_centrality))) is calculated by measuring the amount
@@ -330,7 +318,7 @@ known as information centrality ([11](https://www.centiserver.org/centrality/Cur
 | MDA | 0.000 |     | MDA | 1957.2  |     | MLT | 0.002 |
 | MLT | 0.000 |     | MLT | 1899.7  |     | MDA | 0.001 |
 
-Values of current flow betweenness centrality, current flow closeness
+Tab. 3: Values of current flow betweenness centrality, current flow closeness
 centrality and laplacian centrality of the network.
 
 The Laplacian centralities (computed thanks to corresponding NetworkX
@@ -342,15 +330,15 @@ the network or act as connectors between communities ([13](https://www.centiserv
 
 The values of the edge current flow betweenness centrality are not fully
 reported in this relation because there are too many, the first four
-edges are: SWE \<  − \>FIN=0.078, ITA \<  − \>FRA=0.075,
-CHE \<  − \>DEU=0.074, ITA \<  − \>CHE=0.071.
+edges are: SWE\<−\>FIN=0.078, ITA\<−\>FRA=0.075,
+CHE\<−\>DEU=0.074, ITA\<−\>CHE=0.071.
 
 By running the code, you will be able to view all the values that are
 logged to the terminal.
 
 # Simulation of the electricity grid in 2050
 
-In the second part of the project, when running the file "Evolution.py,"
+In the second part of the project, when running the file "evolution.py,"
 you will be able to observe an initial plot of the European grid. This
 plot considers not the energy production of the states but rather the
 energy consumption, taking into account electricity exchange through the
@@ -389,9 +377,7 @@ with surplus energy supply exports a single unit of electricity (set at
 neighbors with a deficit, the algorithm allows exporting to states that
 don’t have a deficit, enabling them to export in subsequent iterations.
 The algorithm runs recursively until all nodes in the network have a
-neutral energy supply budget (fig
-<a href="#fig:evo" data-reference-type="ref"
-data-reference="fig:evo">4</a>).
+neutral energy supply budget (fig. 4).
 
 ![Error](Images/evolution.png)
 Fig. 4: Network of the European electricity grid after the simulation (for a better visualization run the code).
@@ -416,8 +402,7 @@ generalized approach, as each state may have varying conditions and
 geographical characteristics that allow for a larger or smaller reliance
 on solar and wind energy.
 
-In Table <a href="#tab:GW" data-reference-type="ref"
-data-reference="tab:GW">4</a>, you will find the power allocation and
+In table 4, you will find the power allocation and
 total consumption for each state resulting from the simulation. If you
 run the code, on the terminal are logged the weight of all the links of
 the networks.
@@ -475,8 +460,7 @@ terminal by running the code.
 |  SVK   |   8.04-20.10    |     0.0      |          42.4           |
 |  TUR   |  61.92-154.80   |    21.81     |          401.8          |
 |  UKR   |   34.68-86.70   |     4.65     |          197.3          |
-
-Values of current flow betweenness centrality, current flow closeness
+Tab. 4: Values of current flow betweenness centrality, current flow closeness
 centrality and laplacian centrality of the network.
 
 # Conclusion
