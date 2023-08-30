@@ -74,7 +74,7 @@ green for a production level between 100-200 gCO2/kWh, yellow for a
 production level between 200-300 gCO2/kWh, orange for a production level
 between 300-400 gCO2/kWh, red for a production level between 400-500
 gCO2/kWh, and brown for a production level above 600 gCO2/kWh. The
-carbon intensity of each source of energy is taken from ([IPCC](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf#page=7)).
+carbon intensity of each source of energy is taken from [IPCC](https://www.ipcc.ch/site/assets/uploads/2018/02/ipcc_wg3_ar5_annex-iii.pdf#page=7).
 
 The "DataSet" folder contains only raw and processed files that can be
 ignored for code execution. The relevant files are all located in the
@@ -271,8 +271,8 @@ The edge current flow betweenness centrality (computed thanks to
 corresponding NetworkX function ([documentation here](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.edge_current_flow_betweenness_centrality.html#networkx.algorithms.centrality.edge_current_flow_betweenness_centrality))) has the same aim of the current flow
 betweenness centrality but for the edges.
 
-The [current flow closeness](https://www.centiserver.org/centrality/Current-Flow_Closeness_Centrality/) (computed thanks to corresponding NetworkX
-function ([documentation here](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.current_flow_closeness_centrality.html#networkx.algorithms.centrality.current_flow_closeness_centrality))) centrality is variant of closeness centrality based on
+The [current flow closeness centrality](https://www.centiserver.org/centrality/Current-Flow_Closeness_Centrality/) (computed thanks to corresponding NetworkX
+function ([documentation here](https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.current_flow_closeness_centrality.html#networkx.algorithms.centrality.current_flow_closeness_centrality))) is a variant of closeness centrality based on
 effective resistance between nodes in a network. This metric is also
 known as information centrality.
 
