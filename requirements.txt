@@ -1,4 +1,6 @@
-networkx
-pandas
-numpy
 matplotlib
+networkx
+numpy
+pandas
+pytest
+scipy
