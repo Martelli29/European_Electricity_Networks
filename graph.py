@@ -5,7 +5,7 @@ In this file there are the definitions of the classes that are used in the simul
 import networkx as nx
 
 
-def GetName():
+def GetNames():
     '''
     This function gets the names of the nodes of the network
     from "Nations.txt" file and puts them in a list.
@@ -30,7 +30,7 @@ class DGraph:
         in turn assigns these names to the nodes.
         '''
         self.graph = nx.DiGraph()
-        Nations = GetName()
+        Nations = GetNames()
         for i in range(len(Nations)):
             self.graph.add_node(str(Nations[i]))
 
@@ -114,7 +114,7 @@ class UGraph:
         in turn assigns these names to the nodes.
         '''
         self.graph = nx.Graph()
-        Nations = GetName()
+        Nations = GetNames()
         for i in range(len(Nations)):
             self.graph.add_node(str(Nations[i]))
 

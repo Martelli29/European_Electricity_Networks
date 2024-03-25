@@ -4,22 +4,6 @@ import numpy as np
 import draw as dr
 import graph as gp
 
-
-def GetName():
-    '''
-    This function gets the names of the nodes of the network
-    from "Nations.txt" file and puts them in a list.
-
-    This function returns a list with the names of the nodes.
-    '''
-    nations = []
-    with open("DataSet/Nations.txt", "r") as file:
-        next(file)  # skip first row
-        row = next(file)  # second row
-        nations = row.strip().split(",")  # get name of the nations from the file
-    return nations
-
-
 def GetTotalProduction():
     '''
     This function gets the values of the total electricity production (TWh)
@@ -125,7 +109,7 @@ def PrintTotalFlux(flux):
 
 if __name__ == "__main__":
 
-    Nations = GetName()
+    Nations = gp.GetNames()
     Matrix = FillMatrix(Nations)
     Edges, TotalFlux = NetworkEdges(Nations, Matrix)
     PrintTotalFlux(TotalFlux)
