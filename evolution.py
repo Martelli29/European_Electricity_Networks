@@ -99,8 +99,8 @@ def LinksContribute(Nations, AdjMatrix, carbondensity, totalproduction):
         for j in range(len(Nations)):
             if AdjMatrix[i][j] != 0.0 or AdjMatrix[j][i] != 0.0:
                 # 8760*10**-9 is W-TWh conversion
-                num = num+AdjMatrix[j][i]*(8760*10**-9)*carbondensity[j]
-                den = den+AdjMatrix[j][i]*(8760*10**-9)
+                num = num+(AdjMatrix[j][i]*(8760*10**-9)-AdjMatrix[i][j]*(8760*10**-9))*carbondensity[j]
+                den = den+(AdjMatrix[j][i]*(8760*10**-9)-AdjMatrix[i][j]*(8760*10**-9))
                 cons = cons-AdjMatrix[i][j] + AdjMatrix[j][i]
             else:
                 pass
@@ -219,7 +219,7 @@ def Grid2050(nodes, totalconsumption, adjmatrix):
     import (negative value) or export (positive value), obviously the summation of all
     the import-export is equal to zero.
 
-    The final part of the function is one of the two heaviest computational parts of this project,
+    The final part of the function is one of the two heaviest computational part of the project,
     the functions Balancer(...) and IteratorBalancer(...) are called for obtain a more rational
     values of the import-export between states (a more helpfully description of this two 
     functions are in the declaration of them in the previous lines of this file).
@@ -250,7 +250,7 @@ def Grid2050(nodes, totalconsumption, adjmatrix):
     for i in range(len(nodes)):
         ConsumptionWithoutFF.append(totalconsumption[i]-FFDeficit[i])
 
-    '''List with a increase of energy consumption in 2050 of 40%.'''
+    '''List with an increase of energy consumption in 2050 of 40%.'''
     Consumption2050 = []
     for i in range(len(nodes)):
         Consumption2050.append(totalconsumption[i]+0.4*totalconsumption[i])
