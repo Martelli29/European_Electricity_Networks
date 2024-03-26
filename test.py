@@ -144,10 +144,82 @@ def test_gu_NetworkEdges():
     assert edges==ControlEdges
     assert total==ControlTotal
 
-def test_TotalFlux():
-    values=[10.11,20.11,30.11]
-    ControlFlux=sum(values)
-    ControlFlux=round(ControlFlux, 1)
-    flux=u.PrintTotalFlux(values)
 
-    assert flux==ControlFlux
+def test_evo_GetTotalProduction(TotalProduction=evo.GetTotalProduction()):
+    '''
+    Test the correct length of the list created by the function GetTotalProduction().
+
+    I expect to obtain a length equal to 39 (number of the nodes of the netowrk).
+    '''
+
+    assert len(TotalProduction)==39
+
+def test_evo_GetCarbonDensity(GetCarbonDensity=evo.GetCarbonDensity()):
+    '''
+    Test the correct length of the list created by the function GetCarbonDensity().
+
+    I expect to obtain a length equal to 39 (number of the nodes of the netowrk).
+    '''
+
+    assert len(GetCarbonDensity)==39
+
+def test_LinksContribute_RealCarbonDensity():
+    '''
+    Test the correct values of the real carbon density created by the function LinksCoontribute(...).
+
+    I expect to obtain the correct values of the carbon density that take into account the
+    electricity import-export. 
+    '''
+
+    TestNodes=["a","b"]
+    TestMat = np.array([[0, 10],
+                       [20, 0]])
+    TestCarbonDens=[10,20]
+    TestTotalProd=[0.0000876,10]
+    TotalCons, RealCarbonDens=evo.LinksContribute(TestNodes,TestMat,TestCarbonDens,TestTotalProd)
+    for i in range(len(TestNodes)):
+        TotalCons[i]=round(TotalCons[i],3)
+        RealCarbonDens[i]=round(RealCarbonDens[i],3)
+
+    assert RealCarbonDens[0]==15
+    assert RealCarbonDens[1]==20
+
+def test_LinksContribute_RealTotalProduction():
+    '''
+    Test the correct values of the total consumption created by the function LinksCoontribute(...).
+
+    I expect to obtain the correct values of the total consumption that take into account the
+    electricity import-export.
+    '''
+    
+    TestNodes=["a","b"]
+    TestMat = np.array([[0, 10],
+                       [20, 0]])
+    TestCarbonDens=[10,20]
+    TestTotalProd=[0.0000876,0.1]
+    TotalCons, RealCarbonDens=evo.LinksContribute(TestNodes,TestMat,TestCarbonDens,TestTotalProd)
+    for i in range(len(TestNodes)):
+        TotalCons[i]=round(TotalCons[i],10)
+        RealCarbonDens[i]=round(RealCarbonDens[i],10)
+
+    assert TotalCons[0]==2*TestTotalProd[0]
+
+
+def test_evo_NetworkEdges():
+    '''
+    Test the correct format, order and values of the list of the function NetwrokEdges(...).
+
+    I expect to obtain a list of tuples, in which the first value is the starting node, the
+    second value is the ending node, the third value is the weight of the link.
+    '''
+
+    nodes=["a","b","c"]
+    ControlEdges=[("b","a",20),("c","a",40), ("c","b",20)]
+    matrix = np.array([[0, 20, 30],
+                       [40, 0, 60],
+                       [70, 80, 0]])
+    edges=evo.NetworkEdges(nodes, matrix)
+
+    assert edges==ControlEdges
+
+#def test_evo_Balancer():
